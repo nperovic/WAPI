@@ -1,6 +1,6 @@
 /**
  * Collection of WinAPI functions. (Includes: User32/ Kernel32/ Shell32/ Shlwapi/ UxTheme)
- * @author nperovic
+ * @author nperovic 
  * @link Sourced from thqby's [WinAPI library](https://github.com/thqby/ahk2_lib/tree/master/WinAPI) */
 class WAPI
 {
