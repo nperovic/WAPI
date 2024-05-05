@@ -5,6 +5,8 @@ Includes:
 - Shell32
 - Shlwapi
 - UxTheme
+- Gdi32
+- Gdiplus
 
 ## Source
 Sourced from thqby's [WinAPI library](https://github.com/thqby/ahk2_lib/tree/master/WinAPI)
