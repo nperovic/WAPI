@@ -1,7 +1,11 @@
+#Requires AutoHotkey v2.1-alpha.9
+#Include struct.ahk
+
 /**
  * Collection of WinAPI functions. (Includes: User32/ Kernel32/ Shell32/ Shlwapi/ UxTheme)
- * @author nperovic 
- * @link Sourced from thqby's [WinAPI library](https://github.com/thqby/ahk2_lib/tree/master/WinAPI) */
+ * @link nperovic [GitHub](https://github.com/nperovic/WAPI)
+ * @link Sourced from thqby's [WinAPI library](https://github.com/thqby/ahk2_lib/tree/master/WinAPI) 
+ * */
 class WAPI
 {
 	;#region __User32
@@ -40,7 +44,7 @@ class WAPI
 	static BeginDeferWindowPos(nNumWindows) => DllCall("User32\BeginDeferWindowPos", "int", nNumWindows, "ptr")
 
 	/** @example DllCall("User32\BeginPaint", "ptr", hwnd, "ptr", lpPaint, "ptr") */
-	static BeginPaint(hwnd, lpPaint) => DllCall("User32\BeginPaint", "ptr", hwnd, "ptr", lpPaint, "ptr")
+	static BeginPaint(hwnd, lpPaint) => DllCall("User32\BeginPaint", "ptr", hwnd, "ptr", lpPaint, "uptr")
 
 	/** @example DllCall("User32\BlockInput_", "int", fBlockIt, "int") */
 	static BlockInput_(fBlockIt) => DllCall("User32\BlockInput_", "int", fBlockIt, "int")
@@ -64,7 +68,7 @@ class WAPI
 	static CallNextHookEx(hhk, nCode, wParam, lParam) => DllCall("User32\CallNextHookEx", "ptr", hhk, "int", nCode, "uptr", wParam, "uptr", lParam, "ptr")
 
 	/** @example DllCall("User32\CallWindowProc", "ptr", lpPrevWndFunc, "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "ptr") */
-	static CallWindowProc(lpPrevWndFunc, hWnd, Msg, wParam, lParam) => DllCall("User32\CallWindowProc", "ptr", lpPrevWndFunc, "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "ptr")
+	static CallWindowProc(lpPrevWndFunc, hWnd, uMsg, wParam, lParam) => DllCall("CallWindowProc", "Ptr", lpPrevWndFunc, "Ptr", hwnd, "UInt", uMsg, "Ptr", wParam, "Ptr", lParam)
 
 	/** @example DllCall("User32\CascadeWindows", "ptr", hwndParent, "uint", wHow, "ptr", lpRect, "uint", cKids, "ptr", lpKids, "ushort") */
 	static CascadeWindows(hwndParent, wHow, lpRect, cKids, lpKids) => DllCall("User32\CascadeWindows", "ptr", hwndParent, "uint", wHow, "ptr", lpRect, "uint", cKids, "ptr", lpKids, "ushort")
@@ -427,7 +431,7 @@ class WAPI
 	static EndMenu() => DllCall("User32\EndMenu", "int")
 
 	/** @example DllCall("User32\EndPaint", "ptr", hWnd, "ptr", lpPaint, "int") */
-	static EndPaint(hWnd, lpPaint) => DllCall("User32\EndPaint", "ptr", hWnd, "ptr", lpPaint, "int")
+	static EndPaint(hWnd, lpPaint) => DllCall("User32\EndPaint", "ptr", hWnd, "ptr", lpPaint, "ptr")
 
 	/** @example DllCall("User32\EndTask", "ptr", hWnd, "int", fShutDown, "int", fForce, "int") */
 	static EndTask(hWnd, fShutDown, fForce) => DllCall("User32\EndTask", "ptr", hWnd, "int", fShutDown, "int", fForce, "int")
@@ -571,7 +575,12 @@ class WAPI
 	static GetCursorPos(lpPoint) => DllCall("User32\GetCursorPos", "ptr", lpPoint, "int")
 
 	/** @example DllCall("User32\GetDC", "ptr", hwnd, "ptr") */
-	static GetDC(hwnd) => DllCall("User32\GetDC", "ptr", hwnd, "ptr")
+	static GetDC(hwnd := "") {
+		if hWnd
+			return DllCall("User32\GetDC", "ptr", hwnd, "ptr")
+		else
+			return DllCall("User32\GetDC", "ptr")
+	}
 
 	/** @example DllCall("User32\GetDCEx", "ptr", hWnd, "ptr", hrgnClip, "uint", flags, "ptr") */
 	static GetDCEx(hWnd, hrgnClip, flags) => DllCall("User32\GetDCEx", "ptr", hWnd, "ptr", hrgnClip, "uint", flags, "ptr")
@@ -604,7 +613,7 @@ class WAPI
 	static GetForegroundWindow() => DllCall("User32\GetForegroundWindow", "ptr")
 
 	/** @example DllCall("User32\GetGUIThreadInfo", "uint", idThread, "ptr", lpgui, "int") */
-	static GetGUIThreadInfo(idThread, lpgui) => DllCall("User32\GetGUIThreadInfo", "uint", idThread, "ptr", lpgui, "int")
+	static GetGUIThreadInfo(idThread := 0, &lpgui?) => (DllCall("User32\GetGUIThreadInfo", "uint", idThread, StructOut(GUITHREADINFO), &_lpgui), lpgui := _lpgui)
 
 	/** @example DllCall("User32\GetGestureConfig", "ptr", hwnd, "uint", dwReserved, "uint", dwFlags, "ptr", pcIDs, "ptr", pGestureConfig, "uint", cbSize, "int") */
 	static GetGestureConfig(hwnd, dwReserved, dwFlags, pcIDs, pGestureConfig, cbSize) => DllCall("User32\GetGestureConfig", "ptr", hwnd, "uint", dwReserved, "uint", dwFlags, "ptr", pcIDs, "ptr", pGestureConfig, "uint", cbSize, "int")
@@ -811,7 +820,7 @@ class WAPI
 	static GetUpdateRect(hWnd, lpRect, bErase) => DllCall("User32\GetUpdateRect", "ptr", hWnd, "ptr", lpRect, "int", bErase, "int")
 
 	/** @example DllCall("User32\GetUpdateRgn", "ptr", hWnd, "ptr", hRgn, "int", bErase, "int") */
-	static GetUpdateRgn(hWnd, hRgn, bErase) => DllCall("User32\GetUpdateRgn", "ptr", hWnd, "ptr", hRgn, "int", bErase, "int")
+	static GetUpdateRgn(hWnd, hRgn := 0, bErase := 1) => DllCall("User32\GetUpdateRgn", "ptr", hWnd, "ptr", hRgn, "int", bErase, "int")
 
 	/** @example DllCall("User32\GetUpdatedClipboardFormats", "ptr", lpuiFormats, "uint", cFormats, "ptr", pcFormatsOut, "int") */
 	static GetUpdatedClipboardFormats(lpuiFormats, cFormats, pcFormatsOut) => DllCall("User32\GetUpdatedClipboardFormats", "ptr", lpuiFormats, "uint", cFormats, "ptr", pcFormatsOut, "int")
@@ -840,14 +849,16 @@ class WAPI
 	/** @example DllCall("User32\GetWindowLong", "ptr", hWnd, "int", nIndex, "int") */
 	static GetWindowLong(hWnd, nIndex) => DllCall("User32\GetWindowLong", "ptr", hWnd, "int", nIndex, "int")
 
+	static GetWindowLongPtrW(hWnd, nIndex) => DllCall("User32\GetWindowLongPtr", "ptr", hWnd, "int", nIndex, "ptr")
+
 	/** @example DllCall("User32\GetWindowModuleFileName", "ptr", hwnd, "ptr", StrPtr(lpszFileName), "uint", cchFileNameMax, "uint") */
 	static GetWindowModuleFileName(hwnd, lpszFileName, cchFileNameMax) => DllCall("User32\GetWindowModuleFileName", "ptr", hwnd, "ptr", StrPtr(lpszFileName), "uint", cchFileNameMax, "uint")
 
 	/** @example DllCall("User32\GetWindowPlacement", "ptr", hWnd, "ptr", lpwndpl, "int") */
-	static GetWindowPlacement(hWnd, lpwndpl) => DllCall("User32\GetWindowPlacement", "ptr", hWnd, "ptr", lpwndpl, "int")
+	static GetWindowPlacement(hWnd, lpwndpl) => DllCall("User32\GetWindowPlacement", "ptr", hWnd, "ptr", lpwndpl)
 
 	/** @example DllCall("User32\GetWindowRect", "ptr", hWnd, "ptr", lpRect, "int") */
-	static GetWindowRect(hWnd, lpRect) => DllCall("User32\GetWindowRect", "ptr", hWnd, "ptr", lpRect, "int")
+	static GetWindowRect(hWnd, lpRect) => DllCall("User32\GetWindowRect", "ptr", hWnd, "ptr", lpRect, "uptr")
 
 	/** @example DllCall("User32\GetWindowRgn", "ptr", hWnd, "ptr", hRgn, "int") */
 	static GetWindowRgn(hWnd, hRgn) => DllCall("User32\GetWindowRgn", "ptr", hWnd, "ptr", hRgn, "int")
@@ -856,13 +867,13 @@ class WAPI
 	static GetWindowRgnBox(hWnd, lprc) => DllCall("User32\GetWindowRgnBox", "ptr", hWnd, "ptr", lprc, "int")
 
 	/** @example DllCall("User32\GetWindowText", "ptr", hWnd, "ptr", StrPtr(lpString), "int", nMaxCount, "int") */
-	static GetWindowText(hWnd, lpString, nMaxCount) => DllCall("User32\GetWindowText", "ptr", hWnd, "ptr", StrPtr(lpString), "int", nMaxCount, "int")
+	static GetWindowText(hWnd, lpString, nMaxCount := 255) => (DllCall("User32\GetWindowText", "ptr", hWnd, "ptr", lpString, "int", nMaxCount, "int"), lpString)
 
 	/** @example DllCall("User32\GetWindowTextLength", "ptr", hwnd, "int") */
 	static GetWindowTextLength(hwnd) => DllCall("User32\GetWindowTextLength", "ptr", hwnd, "int")
 
 	/** @example DllCall("User32\GetWindowThreadProcessId", "ptr", hWnd, "ptr", lpdwProcessId, "uint") */
-	static GetWindowThreadProcessId(hWnd, lpdwProcessId) => DllCall("User32\GetWindowThreadProcessId", "ptr", hWnd, "ptr", lpdwProcessId, "uint")
+	static GetWindowThreadProcessId(hWnd, &lpdwProcessId) => DllCall("User32\GetWindowThreadProcessId", "ptr", hWnd, "uptr*", &lpdwProcessId)
 
 	/** @example DllCall("User32\GrayString", "ptr", hDC, "ptr", hBrush, "ptr", lpOutputFunc, "uptr", lpData, "int", nCount, "int", X, "int", Y, "int", nWidth, "int", nHeight, "int") */
 	static GrayString(hDC, hBrush, lpOutputFunc, lpData, nCount, X, Y, nWidth, nHeight) => DllCall("User32\GrayString", "ptr", hDC, "ptr", hBrush, "ptr", lpOutputFunc, "uptr", lpData, "int", nCount, "int", X, "int", Y, "int", nWidth, "int", nHeight, "int")
@@ -997,7 +1008,7 @@ class WAPI
 	static LoadImage(hinst, lpszName, uType, cxDesired, cyDesired, fuLoad) => DllCall("User32\LoadImage", "ptr", hinst, "ptr", StrPtr(lpszName), "uint", uType, "int", cxDesired, "int", cyDesired, "uint", fuLoad, "ptr")
 
 	/** @example DllCall("User32\LoadKeyboardLayout", "ptr", StrPtr(pwszKLID), "uint", Flags, "ptr") */
-	static LoadKeyboardLayout(pwszKLID, Flags) => DllCall("User32\LoadKeyboardLayout", "ptr", StrPtr(pwszKLID), "uint", Flags, "ptr")
+	static LoadKeyboardLayout(pwszKLID, Flags := 0x10) => DllCall("User32\LoadKeyboardLayout", "ptr", StrPtr(String(pwszKLID)), "uint", Flags, "ptr")
 
 	/** @example DllCall("User32\LoadMenu", "ptr", hInstance, "ptr", StrPtr(lpMenuName), "ptr") */
 	static LoadMenu(hInstance, lpMenuName) => DllCall("User32\LoadMenu", "ptr", hInstance, "ptr", StrPtr(lpMenuName), "ptr")
@@ -1057,7 +1068,7 @@ class WAPI
 	static ModifyMenu(hMnu, uPosition, uFlags, uIDNewItem, lpNewItem) => DllCall("User32\ModifyMenu", "ptr", hMnu, "uint", uPosition, "uint", uFlags, "uptr", uIDNewItem, "ptr", StrPtr(lpNewItem), "int")
 
 	/** @example DllCall("User32\MonitorFromPoint", "uint64", pt, "uint", dwFlags, "ptr") */
-	static MonitorFromPoint(pt, dwFlags) => DllCall("User32\MonitorFromPoint", "uint64", pt, "uint", dwFlags, "ptr")
+	static MonitorFromPoint(ptType := "uint64", pt?, dwFlags?) => DllCall("User32\MonitorFromPoint", ptType, pt, "uint", dwFlags, "ptr")
 
 	/** @example DllCall("User32\MonitorFromRect", "ptr", lprc, "uint", dwFlags, "ptr") */
 	static MonitorFromRect(lprc, dwFlags) => DllCall("User32\MonitorFromRect", "ptr", lprc, "uint", dwFlags, "ptr")
@@ -1114,7 +1125,7 @@ class WAPI
 	static PeekMessage(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg) => DllCall("User32\PeekMessage", "ptr", lpMsg, "ptr", hWnd, "uint", wMsgFilterMin, "uint", wMsgFilterMax, "uint", wRemoveMsg, "int")
 
 	/** @example DllCall("User32\PhysicalToLogicalPoint", "ptr", hWnd, "ptr", lpPoint, "int") */
-	static PhysicalToLogicalPoint(hWnd, lpPoint) => DllCall("User32\PhysicalToLogicalPoint", "ptr", hWnd, "ptr", lpPoint, "int")
+	static PhysicalToLogicalPoint(hWnd, lpPoint) => DllCall("User32\PhysicalToLogicalPoint", "ptr", hWnd, POINT, lpPoint, "uptr")
 
 	/** @example DllCall("User32\PostMessageA", "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "int") */
 	static PostMessageA(hWnd, Msg, wParam, lParam) => DllCall("User32\PostMessageA", "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "int")
@@ -1228,7 +1239,7 @@ class WAPI
 	static SendMessageTimeout(hWnd, Msg, wParam, lParam, fuFlags, uTimeout, lpdwResult) => DllCall("User32\SendMessageTimeout", "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "uint", fuFlags, "uint", uTimeout, "uptr", lpdwResult, "ptr")
 
 	/** @example DllCall("User32\SendMessageW", "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "ptr") */
-	static SendMessageW(hWnd, Msg, wParam, lParam) => DllCall("User32\SendMessageW", "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "ptr")
+	static SendMessageW(hWnd, Msg, wParam, lParam) => DllCall("User32\SendMessageW", "ptr", hWnd, "uint", Msg, "ptr", wParam, "ptr", lParam, "ptr")
 
 	/** @example DllCall("User32\SendMessage_", "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "ptr") */
 	static SendMessage_(hWnd, Msg, wParam, lParam) => DllCall("User32\SendMessage_", "ptr", hWnd, "uint", Msg, "uptr", wParam, "uptr", lParam, "ptr")
@@ -1374,52 +1385,43 @@ class WAPI
 	/** @example DllCall("User32\SetWindowDisplayAffinity", "ptr", hWnd, "uint", dwAffinity, "int") */
 	static SetWindowDisplayAffinity(hWnd, dwAffinity) => DllCall("User32\SetWindowDisplayAffinity", "ptr", hWnd, "uint", dwAffinity, "int")
 
-	/** @example DllCall("User32\SetWindowLong", "ptr", hWnd, "int", nIndex, "int", dwNewLong, "int") */
+	  /** @example DllCall("User32\SetWindowLong", "ptr", hWnd, "int", nIndex, "int", dwNewLong, "int") */
 	static SetWindowLong(hWnd, nIndex, dwNewLong) => DllCall("User32\SetWindowLong", "ptr", hWnd, "int", nIndex, "int", dwNewLong, "int")
+
+	/** @example DllCall("User32\SetWindowLongPtrW", "ptr", hWnd, "int", nIndex, "int", dwNewLong, "int") */
+	static SetWindowLongPtrW(hWnd, nIndex, dwNewLong) => DllCall("User32\SetWindowLongPtrW", "ptr", hWnd, "int", nIndex, "ptr", dwNewLong, "ptr")
 
 	/** @example DllCall("User32\SetWindowPlacement", "ptr", hWnd, "ptr", lpwndpl, "int") */
 	static SetWindowPlacement(hWnd, lpwndpl) => DllCall("User32\SetWindowPlacement", "ptr", hWnd, "ptr", lpwndpl, "int")
 
 	/**
-	 * @example DllCall("User32\SetWindowPos", "ptr", hWnd, "ptr", hWndInsertAfter, "int", X, "int", Y, "int", cx, "int", cy, "uint", uFlags, "int")
-	 * */
-
-	/**
 	 * 
-	 * @param {number} hWnd 
+	 * @param {number} hWnd
 	 * @param {number} hWndInsertAfter
-	 * 
-	 * | 值              | 意義 |
-	 * | --------------- | ---- |
-	 * | HWND_BOTTOM     | (HWND) 1 將視窗放在 Z 順序的底部。 如果 hWnd  參數識別最上層視窗，則視窗會失去最上層狀態，並放置在所有其他視窗的底部。 |
-	 * | HWND_NOTOPMOST  | (HWND) -2 將視窗放在所有非最上層視窗上方 (， 也就是在所有最上層視窗後面) 。 如果視窗已經是非最上層的視窗，此旗標就不會有任何作用。 |
-	 * | HWND_TOP        | (HWND) 0 將視窗放在 Z 順序的頂端。 |
-	 * | HWND_TOPMOST    | (HWND) -1 將視窗放在所有非最上層視窗上方。 即使視窗已停用，視窗仍會維持最上層的位置。 |
-	 * 
-	 * @param {number} [X=0] 
-	 * @param {number} [Y=0] 
-	 * @param {number} [cx=0] 
-	 * @param {number} [cy=0] 
-	 * @param {number} uFlags
-	 * 
-	 * | Flag              | Value  | Description |
-	 * | ----------------- | ------ | ----------- |
-	 * | SWP_ASYNCWINDOWPOS| 0x4000 | 如果呼叫執行緒和擁有視窗的執行緒會附加至不同的輸入佇列，則系統會將要求張貼至擁有視窗的執行緒。 這可防止呼叫執行緒封鎖其執行，而其他執行緒則處理要求。 |
-	 * | SWP_DEFERERASE    | 0x2000 | 防止產生 WM_SYNCPAINT 訊息。 |
-	 * | SWP_DRAWFRAME     | 0x0020 | 在視窗的類別描述中，繪製視窗周圍) 定義的框架 (。 |
-	 * | SWP_FRAMECHANGED  | 0x0020 | 使用 SetWindowLong 函式套用新的框架樣式。 將 WM_NCCALCSIZE 訊息傳送至視窗，即使視窗的大小未變更也一樣。 如果未指定此旗標， 則只有在 視窗的大小變更時，才會傳送WM_NCCALCSIZE。 |
-	 * | SWP_HIDEWINDOW    | 0x0080 | 隱藏視窗。 |
-	 * | SWP_NOACTIVATE    | 0x0010 | 不會啟動視窗。 如果未設定此旗標，則會啟動視窗並移至最上層或最上層群組的頂端， (視 hWndInsertAfter 參數的設定而定) 。 |
-	 * | SWP_NOCOPYBITS    | 0x0100 | 捨棄工作區的整個內容。 如果未指定此旗標，則會儲存工作區的有效內容，並在視窗調整大小或重新置放之後複製到工作區。 |
-	 * | SWP_NOMOVE        | 0x0002 | 保留目前的位置 (忽略 X 和 Y 參數) 。 |
-	 * | SWP_NOOWNERZORDER | 0x0200 | 不會變更擁有者視窗在 Z 順序中的位置。 |
-	 * | SWP_NOREDRAW      | 0x0008 | 不會重新繪製變更。 如果設定此旗標，則不會發生任何種類的重新繪製。 這適用于工作區、非用戶端區域 (包括標題列和捲軸) ，以及因視窗移動而發現父視窗的任何部分。 設定此旗標時，應用程式必須明確失效或重新繪製需要重新繪製之視窗和父視窗的任何部分。 |
-	 * | SWP_NOREPOSITION  | 0x0200 | 與 SWP_NOOWNERZORDER 旗標相同。 |
-	 * | SWP_NOSENDCHANGING| 0x0400 | 防止視窗接收 WM_WINDOWPOSCHANGING 訊息。 |
-	 * | SWP_NOSIZE        | 0x0001 | 保留目前的大小 (忽略 cx 和 cy 參數) 。 |
-	 * | SWP_NOZORDER      | 0x0004 | 保留目前的 Z 順序 (忽略 hWndInsertAfter 參數) 。 |
-	 * | SWP_SHOWWINDOW    | 0x0040 | 顯示 視窗。 |
-	 * 
+	 * - `HWND_BOTTOM`: `1` 將視窗放在 Z 順序的底部。如果 hWnd 參數識別最上層視窗，則視窗會失去最上層狀態，並放置在所有其他視窗的底部。
+	 * - `HWND_NOTOPMOST`: `-2` 將視窗放在所有非最上層視窗上方，也就是在所有最上層視窗後面。如果視窗已經是非最上層的視窗，此旗標就不會有任何作用。
+	 * - `HWND_TOP`      : `0` 將視窗放在 Z 順序的頂端。
+	 * - `HWND_TOPMOST`  : `-1` 將視窗放在所有非最上層視窗上方。即使視窗已停用，視窗仍會維持最上層的位置。
+	 * @param {number} [X=0]    
+	 * @param {number} [Y=0]   
+	 * @param {number} [cx=0]   
+	 * @param {number} [cy=0]   
+	 * @param {number} [uFlags=0x40] 
+	 * - `SWP_ASYNCWINDOWPOS`: `0x4000` 如果呼叫執行緒和擁有視窗的執行緒會附加至不同的輸入佇列，則系統會將要求張貼至擁有視窗的執行緒。 這可防止呼叫執行緒封鎖其執行，而其他執行緒則處理要求。
+	 * - `SWP_DEFERERASE`    : `0x2000` 防止產生 WM_SYNCPAINT 訊息。
+	 * - `SWP_DRAWFRAME`     : `0x0020` 在視窗的類別描述中，繪製視窗周圍定義的框架。
+	 * - `SWP_FRAMECHANGED`  : `0x0020` 使用 SetWindowLong 函式套用新的框架樣式。 將 WM_NCCALCSIZE 訊息傳送至視窗，即使視窗的大小未變更也一樣。 如果未指定此旗標， 則只有在 視窗的大小變更時，才會傳送WM_NCCALCSIZE。
+	 * - `SWP_HIDEWINDOW`    : `0x0080` 隱藏視窗。
+	 * - `SWP_NOACTIVATE`    : `0x0010` 不會啟動視窗。 如果未設定此旗標，則會啟動視窗並移至最上層或最上層群組的頂端， (視 hWndInsertAfter 參數的設定而定) 。
+	 * - `SWP_NOCOPYBITS`    : `0x0100` 捨棄工作區的整個內容。 如果未指定此旗標，則會儲存工作區的有效內容，並在視窗調整大小或重新置放之後複製到工作區。
+	 * - `SWP_NOMOVE`        : `0x0002` 保留目前的位置 (忽略 X 和 Y 參數) 。
+	 * - `SWP_NOOWNERZORDER` : `0x0200` 不會變更擁有者視窗在 Z 順序中的位置。
+	 * - `SWP_NOREDRAW`      : `0x0008` 不會重新繪製變更。 如果設定此旗標，則不會發生任何種類的重新繪製。 這適用于工作區、非用戶端區域 (包括標題列和捲軸) ，以及因視窗移動而發現父視窗的任何部分。 設定此旗標時，應用程式必須明確失效或重新繪製需要重新繪製之視窗和父視窗的任何部分。
+	 * - `SWP_NOREPOSITION`  : `0x0200` 與 SWP_NOOWNERZORDER 旗標相同。
+	 * - `SWP_NOSENDCHANGING`: `0x0400` 防止視窗接收 WM_WINDOWPOSCHANGING 訊息。
+	 * - `SWP_NOSIZE`        : `0x0001` 保留目前的大小 (忽略 cx 和 cy 參數) 。
+	 * - `SWP_NOZORDER`      : `0x0004` 保留目前的 Z 順序 (忽略 hWndInsertAfter 參數) 。
+	 * - `SWP_SHOWWINDOW`    : `0x0040` 顯示視窗。  
 	 * @returns {number|string} 
 	 */
 	static SetWindowPos(hWnd, hWndInsertAfter, X := 0, Y := 0, cx := 0, cy := 0, uFlags := 0x40) => DllCall("User32\SetWindowPos", "ptr", hWnd, "ptr", hWndInsertAfter, "int", X, "int", Y, "int", cx, "int", cy, "uint", uFlags, "int")
@@ -1464,7 +1466,7 @@ class WAPI
 	static SoundSentry() => DllCall("User32\SoundSentry", "int")
 
 	/** @example DllCall("User32\SubtractRect", "ptr", lprcDst, "ptr", lprcSrc1, "ptr", lprcSrc2, "int") */
-	static SubtractRect(lprcDst, lprcSrc1, lprcSrc2) => DllCall("User32\SubtractRect", "ptr", lprcDst, "ptr", lprcSrc1, "ptr", lprcSrc2, "int")
+	static SubtractRect(lprcDst, lprcSrc1, lprcSrc2) => DllCall("User32\SubtractRect", "ptr", lprcDst, "ptr", lprcSrc1, "ptr", lprcSrc2, "uptr")
 
 	/** @example DllCall("User32\SwapMouseButton", "int", fSwap, "int") */
 	static SwapMouseButton(fSwap) => DllCall("User32\SwapMouseButton", "int", fSwap, "int")
@@ -1581,10 +1583,10 @@ class WAPI
 	static WindowFromDC(hdc) => DllCall("User32\WindowFromDC", "ptr", hdc, "ptr")
 
 	/** @example DllCall("User32\WindowFromPhysicalPoint", "uint64", Point, "ptr") */
-	static WindowFromPhysicalPoint(Point) => DllCall("User32\WindowFromPhysicalPoint", "uint64", Point, "ptr")
+	static WindowFromPhysicalPoint(pt) => DllCall("User32\WindowFromPhysicalPoint", "uint64", pt, "ptr")
 
 	/** @example DllCall("User32\WindowFromPoint", "uint64", Point, "ptr") */
-	static WindowFromPoint(Point) => DllCall("User32\WindowFromPoint", "uint64", Point, "ptr")
+	static WindowFromPoint(pt) => DllCall("User32\WindowFromPoint", (IsObject(pt) ? [Point, pt, "uptr"] : ["uint64", pt, "ptr"])*)
 
 	/** @example DllCall("User32\keybd_event", "uchar", bVk, "uchar", bScan, "uint", dwFlags, "uptr", dwExtraInfo, "int") */
 	static keybd_event(bVk, bScan, dwFlags, dwExtraInfo) => DllCall("User32\keybd_event", "uchar", bVk, "uchar", bScan, "uint", dwFlags, "uptr", dwExtraInfo, "int")
@@ -3318,7 +3320,7 @@ class WAPI
 	static LocalUnlock(hMem) => DllCall("Kernel32\LocalUnlock", "ptr", hMem, "int")
 
 	/** @example DllCall("Kernel32\LocaleNameToLCID", "wstr", lpName, "uint", dwFlags, "uint") */
-	static LocaleNameToLCID(lpName, dwFlags) => DllCall("Kernel32\LocaleNameToLCID", "wstr", lpName, "uint", dwFlags, "uint")
+	static LocaleNameToLCID(lpName, dwFlags := 0) => DllCall("Kernel32\LocaleNameToLCID", "ptr", StrPtr(lpName), "uint", dwFlags, "uint")
 
 	/** @example DllCall("Kernel32\LocateXStateFeature", "ptr", Context, "uint", FeatureId, "ptr", Length, "ptr") */
 	static LocateXStateFeature(Context, FeatureId, Length) => DllCall("Kernel32\LocateXStateFeature", "ptr", Context, "uint", FeatureId, "ptr", Length, "ptr")
@@ -4313,7 +4315,7 @@ class WAPI
 	/** @example DllCall("Kernel32\lstrlen", "str", lpString, "int") */
 	static lstrlen(lpString) => DllCall("Kernel32\lstrlen", "str", lpString, "int")
 
-	;endregion
+	;#endregion
 
 	;#region __Shell32
 
@@ -4985,7 +4987,7 @@ class WAPI
 
 	static DrawThemeText(hTheme, hdc, iPartId, iStateId, pszText, iCharCount, dwTextFlags, dwTextFlags2, pRect) => DllCall("UxTheme\DrawThemeText", "ptr", hTheme, "ptr", hdc, "int", iPartId, "int", iStateId, "wstr", pszText, "int", iCharCount, "uint", dwTextFlags, "uint", dwTextFlags2, "ptr", pRect, "int")
 
-	static DrawThemeTextEx(hTheme, hdc, iPartId, iStateId, pszText, iCharCount, dwFlags, pRect, pOptions) => DllCall("UxTheme\DrawThemeTextEx", "ptr", hTheme, "ptr", hdc, "int", iPartId, "int", iStateId, "wstr", pszText, "int", iCharCount, "uint", dwFlags, "ptr", pRect, "ptr", pOptions, "int")
+	static DrawThemeTextEx(hTheme, hdc, iPartId, iStateId, pszText, iCharCount, dwFlags, pRect, pOptions) => DllCall("UxTheme\DrawThemeTextEx", "ptr", hTheme, "ptr", hdc, "int", iPartId, "int", iStateId, "ptr", pszText, "int", iCharCount, "uint", dwFlags, "ptr", pRect, "ptr", pOptions, "int")
 
 	static EnableThemeDialogTexture(hwnd, dwFlags) => DllCall("UxTheme\EnableThemeDialogTexture", "ptr", hwnd, "uint", dwFlags, "int")
 
@@ -5085,13 +5087,16 @@ class WAPI
 
 	static IsThemePartDefined(hTheme, iPartId, iStateId) => DllCall("UxTheme\IsThemePartDefined", "ptr", hTheme, "int", iPartId, "int", iStateId, "int")
 
-	static OpenThemeData(hwnd, pszClassList) => DllCall("UxTheme\OpenThemeData", "ptr", hwnd, "wstr", pszClassList, "ptr")
+	static OpenThemeData(hwnd, pszClassList) => DllCall("UxTheme\OpenThemeData", "ptr", hwnd, "ptr", StrPtr(pszClassList), "ptr")
 
-	static OpenThemeDataEx(hwnd, pszClassIdList, dwFlags) => DllCall("UxTheme\OpenThemeDataEx", "ptr", hwnd, "wstr", pszClassIdList, "uint", dwFlags, "ptr")
+	static OpenThemeDataEx(hwnd, pszClassIdList := "", dwFlags := 0 | 1) => DllCall("UxTheme\OpenThemeDataEx", "ptr", hwnd, "ptr", pszClassIdList ? StrPtr(pszClassIdList) : 0, "uint", dwFlags, "ptr")
 
 	static SetThemeAppProperties(dwFlags) => DllCall("UxTheme\SetThemeAppProperties", "uint", dwFlags, "int")
 
-	static SetWindowTheme(hwnd, pszSubAppName, pszSubIdList) => DllCall("UxTheme\SetWindowTheme", "ptr", hwnd, "wstr", pszSubAppName, "wstr", pszSubIdList, "int")
+	static SetWindowTheme(hwnd, pszSubAppName, pszSubIdList := "") => (!DllCall("uxtheme\SetWindowTheme"
+				, "ptr", hwnd
+				, "ptr", StrPtr(pszSubAppName)
+				, "ptr", pszSubIdList ? StrPtr(pszSubIdList) : 0) ? true : false)
 
 	static SetWindowThemeAttribute(hwnd, eAttribute, pvAttribute, cbAttribute) => DllCall("UxTheme\SetWindowThemeAttribute", "ptr", hwnd, "int", eAttribute, "ptr", pvAttribute, "uint", cbAttribute, "int")
 
@@ -5518,7 +5523,7 @@ class WAPI
 
 	static UrlCreateFromPath(pszPath, pszUrl, &pcchUrl, dwFlags)=> DllCall("Shlwapi\UrlCreateFromPath", "str", pszPath, "str", pszUrl, "uint*", &pcchUrl, "uint", dwFlags, "int")
 
-	static UrlEscape(pszURL, pszEscaped, &pcchEscaped, dwFlags) => DllCall("Shlwapi\UrlEscape", "str", pszURL, "str", pszEscaped, "uint*", &pcchEscaped, "uint", dwFlags, "int")
+	static UrlEscape(pszURL, &pszEscaped, &pcchEscaped, dwFlags) => DllCall("Shlwapi\UrlEscape", "ptr", StrPtr(pszURL), "str", pszEscaped, "uint*", &pcchEscaped, "uint", dwFlags, "int")
 
 	static UrlFixupW(pcszUrl, pszTranslatedUrl, cchMax) => DllCall("Shlwapi\UrlFixupW", "wstr", pcszUrl, "ptr", pszTranslatedUrl, "uint", cchMax, "int")
 
@@ -5534,6 +5539,8 @@ class WAPI
 
 	static UrlIsOpaque(pszURL)=> DllCall("Shlwapi\UrlIsOpaque", "str", pszURL, "int")
 
+
+
 	static UrlUnescape(pszURL, pszUnescaped, &pcchUnescaped, dwFlags) => DllCall("Shlwapi\UrlUnescape", "str", pszURL, "str", pszUnescaped, "uint*", &pcchUnescaped, "uint", dwFlags, "int")
 
 	static WhichPlatform()=> DllCall("Shlwapi\WhichPlatform", "uint")
@@ -5548,6 +5555,1853 @@ class WAPI
 	}
 
 	static wvnsprintf(pszDest, cchDest, pszFmt, arglist) => DllCall("Shlwapi\wvnsprintf", "str", pszDest, "int", cchDest, "str", pszFmt, "ptr", arglist, "int")
+	
+	;;}
 
+	;#endregion }
+
+	;#region __Gdi32
+
+	static AbortDoc(hdc) => DllCall('Gdi32\AbortDoc', 'ptr', hdc, 'int')
+
+	static AbortPath(hdc) => DllCall('Gdi32\AbortPath', 'ptr', hdc, 'int')
+
+	static AddFontMemResourceEx(pbFont, cbFont, pdv, &pcFonts) => DllCall('Gdi32\AddFontMemResourceEx', 'ptr', pbFont, 'uint', cbFont, 'ptr', pdv, 'uint*', &pcFonts, 'ptr')
+
+	static AddFontResource(lpszFilename) => DllCall('Gdi32\AddFontResource', 'str', lpszFilename, 'int')
+
+	static AddFontResourceEx(lpszFilename, fl, pdv) => DllCall('Gdi32\AddFontResourceEx', 'str', lpszFilename, 'uint', fl, 'ptr', pdv, 'int')
+
+	static AngleArc(hdc, X, Y, dwRadius, eStartAngle, eSweepAngle) => DllCall('Gdi32\AngleArc', 'ptr', hdc, 'int', X, 'int', Y, 'uint', dwRadius, 'float', eStartAngle, 'float', eSweepAngle, 'int')
+
+	static AnimatePalette(hpal, iStartIndex, cEntries, ppe) => DllCall('Gdi32\AnimatePalette', 'ptr', hpal, 'uint', iStartIndex, 'uint', cEntries, 'ptr', ppe, 'int')
+
+	static Arc(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect, nXStartArc, nYStartArc, nXEndArc, nYEndArc) => DllCall('Gdi32\Arc', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int', nXStartArc, 'int', nYStartArc, 'int', nXEndArc, 'int', nYEndArc, 'int')
+
+	static ArcTo(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect, nXRadial1, nYRadial1, nXRadial2, nYRadial2) => DllCall('Gdi32\ArcTo', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int', nXRadial1, 'int', nYRadial1, 'int', nXRadial2, 'int', nYRadial2, 'int')
+
+	static BeginPath(hdc) => DllCall('Gdi32\BeginPath', 'ptr', hdc, 'int')
+
+	static BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop) => DllCall('Gdi32\BitBlt', 'ptr', hdcDest, 'int', nXDest, 'int', nYDest, 'int', nWidth, 'int', nHeight, 'ptr', hdcSrc, 'int', nXSrc, 'int', nYSrc, 'uint', dwRop, 'int')
+
+	static CancelDC(hdc) => DllCall('Gdi32\CancelDC', 'ptr', hdc, 'int')
+
+	static CheckColorsInGamut(hDC, lpRGBTriples, lpBuffer, nCount) => DllCall('Gdi32\CheckColorsInGamut', 'ptr', hDC, 'ptr', lpRGBTriples, 'ptr', lpBuffer, 'uint', nCount, 'int')
+
+	static ChoosePixelFormat(hdc, ppfd) => DllCall('Gdi32\ChoosePixelFormat', 'ptr', hdc, 'ptr', ppfd, 'int')
+
+	static Chord(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect, nXRadial1, nYRadial1, nXRadial2, nYRadial2) => DllCall('Gdi32\Chord', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int', nXRadial1, 'int', nYRadial1, 'int', nXRadial2, 'int', nYRadial2, 'int')
+
+	static CloseEnhMetaFile(hdc) => DllCall('Gdi32\CloseEnhMetaFile', 'ptr', hdc, 'ptr')
+
+	static CloseFigure(hdc) => DllCall('Gdi32\CloseFigure', 'ptr', hdc, 'int')
+
+	static CloseMetaFile(hdc) => DllCall('Gdi32\CloseMetaFile', 'ptr', hdc, 'ptr')
+
+	static ColorCorrectPalette(hDC, hPalette, dwFirstEntry, dwNumOfEntries) => DllCall('Gdi32\ColorCorrectPalette', 'ptr', hDC, 'ptr', hPalette, 'uint', dwFirstEntry, 'uint', dwNumOfEntries, 'int')
+
+	static ColorMatchToTarget(hDC, hdcTarget, uiAction) => DllCall('Gdi32\ColorMatchToTarget', 'ptr', hDC, 'ptr', hdcTarget, 'uint', uiAction, 'int')
+
+	static CombineRgn(hrgnDest, hrgnSrc1, hrgnSrc2, fnCombineMode) => DllCall('Gdi32\CombineRgn', 'ptr', hrgnDest, 'ptr', hrgnSrc1, 'ptr', hrgnSrc2, 'int', fnCombineMode, 'int')
+
+	static CombineTransform(lpxformResult, lpxform1, lpxform2) => DllCall('Gdi32\CombineTransform', 'ptr', lpxformResult, 'ptr', lpxform1, 'ptr', lpxform2, 'int')
+
+	static CopyEnhMetaFile(hemfSrc, lpszFile) => DllCall('Gdi32\CopyEnhMetaFile', 'ptr', hemfSrc, 'str', lpszFile, 'ptr')
+
+	static CopyMetaFile(hmfSrc, lpszFile) => DllCall('Gdi32\CopyMetaFile', 'ptr', hmfSrc, 'str', lpszFile, 'ptr')
+
+	static CreateBitmap(nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits) => DllCall('Gdi32\CreateBitmap', 'int', nWidth, 'int', nHeight, 'uint', cPlanes, 'uint', cBitsPerPel, 'ptr', lpvBits, 'ptr')
+
+	static CreateBitmapIndirect(lpbm) => DllCall('Gdi32\CreateBitmapIndirect', 'ptr', lpbm, 'ptr')
+
+	static CreateBrushIndirect(lplb) => DllCall('Gdi32\CreateBrushIndirect', 'ptr', lplb, 'ptr')
+
+	static CreateColorSpace(lpLogColorSpace) => DllCall('Gdi32\CreateColorSpace', 'ptr', lpLogColorSpace, 'ptr')
+
+	static CreateCompatibleBitmap(hdc, nWidth, nHeight) => DllCall('Gdi32\CreateCompatibleBitmap', 'ptr', hdc, 'int', nWidth, 'int', nHeight, 'ptr')
+
+	static CreateCompatibleDC(hdc) => DllCall('Gdi32\CreateCompatibleDC', 'ptr', hdc, 'ptr')
+
+	static CreateDC(lpszDriver, lpszDevice, lpszOutput, lpInitData) => DllCall('Gdi32\CreateDC', 'str', lpszDriver, 'str', lpszDevice, 'str', lpszOutput, 'ptr', lpInitData, 'ptr')
+
+	static CreateDIBPatternBrush(hglbDIBPacked, fuColorSpec) => DllCall('Gdi32\CreateDIBPatternBrush', 'ptr', hglbDIBPacked, 'uint', fuColorSpec, 'ptr')
+
+	static CreateDIBPatternBrushPt(lpPackedDIB, iUsage) => DllCall('Gdi32\CreateDIBPatternBrushPt', 'ptr', lpPackedDIB, 'uint', iUsage, 'ptr')
+
+	static CreateDIBSection(hdc, pbmi, iUsage, ppvBits, hSection, dwOffset) => DllCall('Gdi32\CreateDIBSection', 'ptr', hdc, 'ptr', pbmi, 'uint', iUsage, 'ptr', ppvBits, 'ptr', hSection, 'uint', dwOffset, 'ptr')
+
+	static CreateDIBitmap(hdc, lpbmih, fdwInit, lpbInit, lpbmi, fuUsage) => DllCall('Gdi32\CreateDIBitmap', 'ptr', hdc, 'ptr', lpbmih, 'uint', fdwInit, 'ptr', lpbInit, 'ptr', lpbmi, 'uint', fuUsage, 'ptr')
+
+	static CreateDiscardableBitmap(hdc, nWidth, nHeight) => DllCall('Gdi32\CreateDiscardableBitmap', 'ptr', hdc, 'int', nWidth, 'int', nHeight, 'ptr')
+
+	static CreateEllipticRgn(nLeftRect, nTopRect, nRightRect, nBottomRect) => DllCall('Gdi32\CreateEllipticRgn', 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'ptr')
+
+	static CreateEllipticRgnIndirect(lprc) => DllCall('Gdi32\CreateEllipticRgnIndirect', 'ptr', lprc, 'ptr')
+
+	static CreateEnhMetaFile(hdcRef, lpFilename, lpRect, lpDescription) => DllCall('Gdi32\CreateEnhMetaFile', 'ptr', hdcRef, 'str', lpFilename, 'ptr', lpRect, 'str', lpDescription, 'ptr')
+
+	static CreateFont(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace) => DllCall('Gdi32\CreateFont', 'int', nHeight, 'int', nWidth, 'int', nEscapement, 'int', nOrientation, 'int', fnWeight, 'uint', fdwItalic, 'uint', fdwUnderline, 'uint', fdwStrikeOut, 'uint', fdwCharSet, 'uint', fdwOutputPrecision, 'uint', fdwClipPrecision, 'uint', fdwQuality, 'uint', fdwPitchAndFamily, 'str', lpszFace, 'ptr')
+
+	static CreateFontIndirect(lplf) => DllCall('Gdi32\CreateFontIndirect', 'ptr', lplf, 'ptr')
+
+	static CreateFontIndirectEx(penumlfex) => DllCall('Gdi32\CreateFontIndirectEx', 'ptr', penumlfex, 'ptr')
+
+	static CreateHalftonePalette(hdc) => DllCall('Gdi32\CreateHalftonePalette', 'ptr', hdc, 'ptr')
+
+	static CreateHatchBrush(fnStyle, clrref) => DllCall('Gdi32\CreateHatchBrush', 'int', fnStyle, 'uint', clrref, 'ptr')
+
+	static CreateIC(lpszDriver, lpszDevice, lpszOutput, lpdvmInit) => DllCall('Gdi32\CreateIC', 'str', lpszDriver, 'str', lpszDevice, 'str', lpszOutput, 'ptr', lpdvmInit, 'ptr')
+
+	static CreateMetaFile(lpszFile) => DllCall('Gdi32\CreateMetaFile', 'str', lpszFile, 'ptr')
+
+	static CreatePalette(lplgpl) => DllCall('Gdi32\CreatePalette', 'ptr', lplgpl, 'ptr')
+
+	static CreatePatternBrush(hbmp) => DllCall('Gdi32\CreatePatternBrush', 'ptr', hbmp, 'ptr')
+
+	static CreatePen(fnPenStyle, nWidth, crColor) => DllCall('Gdi32\CreatePen', 'int', fnPenStyle, 'int', nWidth, 'uint', crColor, 'ptr')
+
+	static CreatePenIndirect(lplgpn) => DllCall('Gdi32\CreatePenIndirect', 'ptr', lplgpn, 'ptr')
+
+	static CreatePolyPolygonRgn(lppt, &lpPolyCounts, nCount, fnPolyFillMode) => DllCall('Gdi32\CreatePolyPolygonRgn', 'ptr', lppt, 'int*', &lpPolyCounts, 'int', nCount, 'int', fnPolyFillMode, 'ptr')
+
+	static CreatePolygonRgn(lppt, cPoints, fnPolyFillMode) => DllCall('Gdi32\CreatePolygonRgn', 'ptr', lppt, 'int', cPoints, 'int', fnPolyFillMode, 'ptr')
+
+	static CreateRectRgn(nLeftRect, nTopRect, nRightRect, nBottomRect) => DllCall('Gdi32\CreateRectRgn', 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'ptr')
+
+	static CreateRectRgnIndirect(lprc) => DllCall('Gdi32\CreateRectRgnIndirect', 'ptr', lprc, 'ptr')
+
+	static CreateRoundRectRgn(nLeftRect, nTopRect, nRightRect, nBottomRect, nWidthEllipse, nHeightEllipse) => DllCall('Gdi32\CreateRoundRectRgn', 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int', nWidthEllipse, 'int', nHeightEllipse, 'ptr')
+
+	static CreateScalableFontResource(fdwHidden, lpszFontRes, lpszFontFile, lpszCurrentPath) => DllCall('Gdi32\CreateScalableFontResource', 'uint', fdwHidden, 'str', lpszFontRes, 'str', lpszFontFile, 'str', lpszCurrentPath, 'int')
+
+	static CreateSolidBrush(crColor) => DllCall('Gdi32\CreateSolidBrush', 'uint', crColor, 'ptr')
+
+	static DDCCIGetCapabilitiesString(hMonitor, pszString, dwLength) => DllCall('Gdi32\DDCCIGetCapabilitiesString', 'ptr', hMonitor, 'astr', pszString, 'uint', dwLength, 'int')
+
+	static DDCCIGetCapabilitiesStringLength(hMonitor, &pdwLength) => DllCall('Gdi32\DDCCIGetCapabilitiesStringLength', 'ptr', hMonitor, 'uint*', &pdwLength, 'int')
+
+	static DDCCIGetTimingReport(hMonitor, pmtr) => DllCall('Gdi32\DDCCIGetTimingReport', 'ptr', hMonitor, 'ptr', pmtr, 'int')
+
+	static DDCCIGetVCPFeature(hMonitor, dwVCPCode, pvct, &pdwCurrentValue, &pdwMaximumValue) => DllCall('Gdi32\DDCCIGetVCPFeature', 'ptr', hMonitor, 'uint', dwVCPCode, 'ptr', pvct, 'uint*', &pdwCurrentValue, 'uint*', &pdwMaximumValue, 'int')
+
+	static DDCCISaveCurrentSettings(hMonitor) => DllCall('Gdi32\DDCCISaveCurrentSettings', 'ptr', hMonitor, 'int')
+
+	static DDCCISetVCPFeature(hMonitor, dwVCPCode, dwNewValue) => DllCall('Gdi32\DDCCISetVCPFeature', 'ptr', hMonitor, 'uint', dwVCPCode, 'uint', dwNewValue, 'int')
+
+	static DPtoLP(hdc, lpPoints, nCount) => DllCall('Gdi32\DPtoLP', 'ptr', hdc, 'ptr', lpPoints, 'int', nCount, 'int')
+
+	static DeleteColorSpace(hColorSpace) => DllCall('Gdi32\DeleteColorSpace', 'ptr', hColorSpace, 'int')
+
+	static DeleteDC(hdc) => DllCall('Gdi32\DeleteDC', 'ptr', hdc, 'int')
+
+	static DeleteEnhMetaFile(hemf) => DllCall('Gdi32\DeleteEnhMetaFile', 'ptr', hemf, 'int')
+
+	static DeleteMetaFile(hmf) => DllCall('Gdi32\DeleteMetaFile', 'ptr', hmf, 'int')
+
+	static DeleteObject(hObject) => DllCall('Gdi32\DeleteObject', 'ptr', hObject, 'int')
+
+	static DescribePixelFormat(hdc, iPixelFormat, nBytes, ppfd) => DllCall('Gdi32\DescribePixelFormat', 'ptr', hdc, 'int', iPixelFormat, 'uint', nBytes, 'ptr', ppfd, 'int')
+
+	static DestroyPhysicalMonitorInternal(hMonitor) => DllCall('Gdi32\DestroyPhysicalMonitorInternal', 'ptr', hMonitor, 'int')
+
+	static DrawEscape(hdc, nEscape, cbInput, lpszInData) => DllCall('Gdi32\DrawEscape', 'ptr', hdc, 'int', nEscape, 'int', cbInput, 'astr', lpszInData, 'int')
+
+	static Ellipse(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect) => DllCall('Gdi32\Ellipse', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int')
+
+	static EnableEUDC(&fEnableEUDC) => DllCall('Gdi32\EnableEUDC', 'int*', &fEnableEUDC, 'int')
+
+	static EndDoc(hdc) => DllCall('Gdi32\EndDoc', 'ptr', hdc, 'int')
+
+	static EndPage(hdc) => DllCall('Gdi32\EndPage', 'ptr', hdc, 'int')
+
+	static EndPath(hdc) => DllCall('Gdi32\EndPath', 'ptr', hdc, 'int')
+
+	static EnumEnhMetaFile(hdc, hemf, lpEnhMetaFunc, lpData, lpRect) => DllCall('Gdi32\EnumEnhMetaFile', 'ptr', hdc, 'ptr', hemf, 'ptr', lpEnhMetaFunc, 'ptr', lpData, 'ptr', lpRect, 'int')
+
+	static EnumFontFamilies(hdc, lpszFamily, lpEnumFontFamProc, lParam) => DllCall('Gdi32\EnumFontFamilies', 'ptr', hdc, 'str', lpszFamily, 'ptr', lpEnumFontFamProc, 'uptr', lParam, 'int')
+
+	static EnumFontFamiliesEx(hdc, lpLogfont, lpEnumFontFamExProc, lParam, dwFlags) => DllCall('Gdi32\EnumFontFamiliesEx', 'ptr', hdc, 'ptr', lpLogfont, 'ptr', lpEnumFontFamExProc, 'uptr', lParam, 'uint', dwFlags, 'int')
+
+	static EnumFonts(hdc, lpFaceName, lpFontFunc, lParam) => DllCall('Gdi32\EnumFonts', 'ptr', hdc, 'str', lpFaceName, 'ptr', lpFontFunc, 'uptr', lParam, 'int')
+
+	static EnumICMProfiles(hDC, lpEnumICMProfilesFunc, lParam) => DllCall('Gdi32\EnumICMProfiles', 'ptr', hDC, 'ptr', lpEnumICMProfilesFunc, 'uptr', lParam, 'int')
+
+	static EnumMetaFile(hdc, hmf, lpMetaFunc, lParam) => DllCall('Gdi32\EnumMetaFile', 'ptr', hdc, 'ptr', hmf, 'ptr', lpMetaFunc, 'uptr', lParam, 'int')
+
+	static EnumObjects(hdc, nObjectType, lpObjectFunc, lParam) => DllCall('Gdi32\EnumObjects', 'ptr', hdc, 'int', nObjectType, 'ptr', lpObjectFunc, 'uptr', lParam, 'int')
+
+	static EqualRgn(hSrcRgn1, hSrcRgn2) => DllCall('Gdi32\EqualRgn', 'ptr', hSrcRgn1, 'ptr', hSrcRgn2, 'int')
+
+	static Escape(hdc, nEscape, cbInput, lpvInData, lpvOutData) => DllCall('Gdi32\Escape', 'ptr', hdc, 'int', nEscape, 'int', cbInput, 'astr', lpvInData, 'ptr', lpvOutData, 'int')
+
+	static ExcludeClipRect(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect) => DllCall('Gdi32\ExcludeClipRect', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int')
+
+	static ExtCreatePen(dwPenStyle, dwWidth, lplb, dwStyleCount, &lpStyle) => DllCall('Gdi32\ExtCreatePen', 'uint', dwPenStyle, 'uint', dwWidth, 'ptr', lplb, 'uint', dwStyleCount, 'uint*', &lpStyle, 'ptr')
+
+	static ExtCreateRegion(lpXform, nCount, lpRgnData) => DllCall('Gdi32\ExtCreateRegion', 'ptr', lpXform, 'uint', nCount, 'ptr', lpRgnData, 'ptr')
+
+	static ExtEscape(hdc, nEscape, cbInput, lpszInData, cbOutput, lpszOutData) => DllCall('Gdi32\ExtEscape', 'ptr', hdc, 'int', nEscape, 'int', cbInput, 'astr', lpszInData, 'int', cbOutput, 'astr', lpszOutData, 'int')
+
+	static ExtFloodFill(hdc, nXStart, nYStart, crColor, fuFillType) => DllCall('Gdi32\ExtFloodFill', 'ptr', hdc, 'int', nXStart, 'int', nYStart, 'uint', crColor, 'uint', fuFillType, 'ptr')
+
+	static ExtSelectClipRgn(hdc, hrgn, fnMode) => DllCall('Gdi32\ExtSelectClipRgn', 'ptr', hdc, 'ptr', hrgn, 'int', fnMode, 'int')
+
+	static ExtTextOut(hdc, X, Y, fuOptions, lprc, lpString, cbCount, &lpDx) => DllCall('Gdi32\ExtTextOut', 'ptr', hdc, 'int', X, 'int', Y, 'uint', fuOptions, 'ptr', lprc, 'str', lpString, 'uint', cbCount, 'int*', &lpDx, 'int')
+
+	static FillPath(hdc) => DllCall('Gdi32\FillPath', 'ptr', hdc, 'int')
+
+	static FillRgn(hdc, hrgn, hbr) => DllCall('Gdi32\FillRgn', 'ptr', hdc, 'ptr', hrgn, 'ptr', hbr, 'ptr')
+
+	static FlattenPath(hdc) => DllCall('Gdi32\FlattenPath', 'ptr', hdc, 'int')
+
+	static FloodFill(hdc, nXStart, nYStart, crFill) => DllCall('Gdi32\FloodFill', 'ptr', hdc, 'int', nXStart, 'int', nYStart, 'uint', crFill, 'int')
+
+	static FrameRgn(hdc, hrgn, hbr, nWidth, nHeight) => DllCall('Gdi32\FrameRgn', 'ptr', hdc, 'ptr', hrgn, 'ptr', hbr, 'int', nWidth, 'int', nHeight, 'int')
+
+	static GdiAlphaBlend(hdcDest, xoriginDest, yoriginDest, wDest, hDest, hdcSrc, xoriginSrc, yoriginSrc, wSrc, hSrc, ftn) => DllCall('Gdi32\GdiAlphaBlend', 'ptr', hdcDest, 'int', xoriginDest, 'int', yoriginDest, 'int', wDest, 'int', hDest, 'ptr', hdcSrc, 'int', xoriginSrc, 'int', yoriginSrc, 'int', wSrc, 'int', hSrc, 'uint', ftn, 'int')
+
+	static GdiComment(hdc, cbSize, &lpData) => DllCall('Gdi32\GdiComment', 'ptr', hdc, 'uint', cbSize, 'uchar*', &lpData, 'int')
+
+	static GdiFlush() => DllCall('Gdi32\GdiFlush', 'int')
+
+	static GdiGetBatchLimit() => DllCall('Gdi32\GdiGetBatchLimit', 'uint')
+
+	static GdiGradientFill(hdc, pVertex, dwNumVertex, pMesh, dwNumMesh, dwMode) => DllCall('Gdi32\GdiGradientFill', 'ptr', hdc, 'ptr', pVertex, 'uint', dwNumVertex, 'ptr', pMesh, 'uint', dwNumMesh, 'uint', dwMode, 'int')
+
+	static GdiSetBatchLimit(dwLimit) => DllCall('Gdi32\GdiSetBatchLimit', 'uint', dwLimit, 'uint')
+
+	static GdiTransparentBlt(hdcDest, xoriginDest, yoriginDest, wDest, hDest, hdcSrc, xoriginSrc, yoriginSrc, wSrc, hSrc, crTransparent) => DllCall('Gdi32\GdiTransparentBlt', 'ptr', hdcDest, 'int', xoriginDest, 'int', yoriginDest, 'int', wDest, 'int', hDest, 'ptr', hdcSrc, 'int', xoriginSrc, 'int', yoriginSrc, 'int', wSrc, 'int', hSrc, 'uint', crTransparent, 'int')
+
+	static GetArcDirection(hdc) => DllCall('Gdi32\GetArcDirection', 'ptr', hdc, 'int')
+
+	static GetAspectRatioFilterEx(hdc, lpAspectRatio) => DllCall('Gdi32\GetAspectRatioFilterEx', 'ptr', hdc, 'ptr', lpAspectRatio, 'int')
+
+	static GetBitmapBits(hbmp, cbBuffer, lpvBits) => DllCall('Gdi32\GetBitmapBits', 'ptr', hbmp, 'int', cbBuffer, 'ptr', lpvBits, 'int')
+
+	static GetBitmapDimensionEx(hBitmap, lpDimension) => DllCall('Gdi32\GetBitmapDimensionEx', 'ptr', hBitmap, 'ptr', lpDimension, 'int')
+
+	static GetBkColor(hdc) => DllCall('Gdi32\GetBkColor', 'ptr', hdc, 'uint')
+
+	static GetBkMode(hdc) => DllCall('Gdi32\GetBkMode', 'ptr', hdc, 'int')
+
+	static GetBoundsRect(hdc, lprcBounds, flags) => DllCall('Gdi32\GetBoundsRect', 'ptr', hdc, 'ptr', lprcBounds, 'uint', flags, 'uint')
+
+	static GetBrushOrgEx(hdc, lppt) => DllCall('Gdi32\GetBrushOrgEx', 'ptr', hdc, 'ptr', lppt, 'int')
+
+	static GetCharABCWidths(hdc, uFirstChar, uLastChar, lpabc) => DllCall('Gdi32\GetCharABCWidths', 'ptr', hdc, 'uint', uFirstChar, 'uint', uLastChar, 'ptr', lpabc, 'int')
+
+	static GetCharABCWidthsFloat(hdc, iFirstChar, iLastChar, lpABCF) => DllCall('Gdi32\GetCharABCWidthsFloat', 'ptr', hdc, 'uint', iFirstChar, 'uint', iLastChar, 'ptr', lpABCF, 'int')
+
+	static GetCharABCWidthsI(hdc, giFirst, cgi, pgi, lpabc) => DllCall('Gdi32\GetCharABCWidthsI', 'ptr', hdc, 'uint', giFirst, 'uint', cgi, 'ptr', pgi, 'ptr', lpabc, 'int')
+
+	static GetCharWidth(hdc, iFirstChar, iLastChar, lpBuffer) => DllCall('Gdi32\GetCharWidth', 'ptr', hdc, 'uint', iFirstChar, 'uint', iLastChar, 'ptr', lpBuffer, 'int')
+
+	static GetCharWidth32(hdc, iFirstChar, iLastChar, lpBuffer) => DllCall('Gdi32\GetCharWidth32', 'ptr', hdc, 'uint', iFirstChar, 'uint', iLastChar, 'ptr', lpBuffer, 'int')
+
+	static GetCharWidthFloat(hdc, iFirstChar, iLastChar, pxBuffer) => DllCall('Gdi32\GetCharWidthFloat', 'ptr', hdc, 'uint', iFirstChar, 'uint', iLastChar, 'ptr', pxBuffer, 'int')
+
+	static GetCharWidthI(hdc, giFirst, cgi, pgi, lpBuffer) => DllCall('Gdi32\GetCharWidthI', 'ptr', hdc, 'uint', giFirst, 'uint', cgi, 'ptr', pgi, 'ptr', lpBuffer, 'int')
+
+	static GetCharacterPlacement(hdc, lpString, nCount, nMaxExtent, lpResults, dwFlags) => DllCall('Gdi32\GetCharacterPlacement', 'ptr', hdc, 'str', lpString, 'int', nCount, 'int', nMaxExtent, 'ptr', lpResults, 'uint', dwFlags, 'uint')
+
+	static GetClipBox(hdc, lprc) => DllCall('Gdi32\GetClipBox', 'ptr', hdc, 'ptr', lprc, 'int')
+
+	static GetClipRgn(hdc, hrgn) => DllCall('Gdi32\GetClipRgn', 'ptr', hdc, 'ptr', hrgn, 'int')
+
+	static GetColorAdjustment(hdc, lpca) => DllCall('Gdi32\GetColorAdjustment', 'ptr', hdc, 'ptr', lpca, 'int')
+
+	static GetColorSpace(hDC) => DllCall('Gdi32\GetColorSpace', 'ptr', hDC, 'ptr')
+
+	static GetCurrentObject(hdc, uObjectType) => DllCall('Gdi32\GetCurrentObject', 'ptr', hdc, 'uint', uObjectType, 'ptr')
+
+	static GetCurrentPositionEx(hdc, lpPoint) => DllCall('Gdi32\GetCurrentPositionEx', 'ptr', hdc, 'ptr', lpPoint, 'int')
+
+	static GetDCBrushColor(hdc) => DllCall('Gdi32\GetDCBrushColor', 'ptr', hdc, 'uint')
+
+	static GetDCOrgEx(hdc, lpPoint) => DllCall('Gdi32\GetDCOrgEx', 'ptr', hdc, 'ptr', lpPoint, 'int')
+
+	static GetDCPenColor(hdc) => DllCall('Gdi32\GetDCPenColor', 'ptr', hdc, 'uint')
+
+	static GetDIBColorTable(hdc, uStartIndex, cEntries, pColors) => DllCall('Gdi32\GetDIBColorTable', 'ptr', hdc, 'uint', uStartIndex, 'uint', cEntries, 'ptr', pColors, 'uint')
+
+	static GetDIBits(hdc, hbmp, uStartScan, cScanLines, lpvBits, lpbi, uUsage) => DllCall('Gdi32\GetDIBits', 'ptr', hdc, 'ptr', hbmp, 'uint', uStartScan, 'uint', cScanLines, 'ptr', lpvBits, 'ptr', lpbi, 'uint', uUsage, 'int')
+
+	static GetDeviceCaps(hdc, nIndex) => DllCall('Gdi32\GetDeviceCaps', 'ptr', hdc, 'int', nIndex, 'int')
+
+	static GetDeviceGammaRamp(hDC, lpRamp) => DllCall('Gdi32\GetDeviceGammaRamp', 'ptr', hDC, 'ptr', lpRamp, 'int')
+
+	static GetEnhMetaFile(lpszMetaFile) => DllCall('Gdi32\GetEnhMetaFile', 'str', lpszMetaFile, 'ptr')
+
+	static GetEnhMetaFileBits(hemf, cbBuffer, lpbBuffer) => DllCall('Gdi32\GetEnhMetaFileBits', 'ptr', hemf, 'uint', cbBuffer, 'ptr', lpbBuffer, 'uint')
+
+	static GetEnhMetaFileDescription(hemf, cchBuffer, lpszDescription) => DllCall('Gdi32\GetEnhMetaFileDescription', 'ptr', hemf, 'uint', cchBuffer, 'str', lpszDescription, 'uint')
+
+	static GetEnhMetaFileHeader(hemf, cbBuffer, lpemh) => DllCall('Gdi32\GetEnhMetaFileHeader', 'ptr', hemf, 'uint', cbBuffer, 'ptr', lpemh, 'uint')
+
+	static GetEnhMetaFilePaletteEntries(hemf, cEntries, lppe) => DllCall('Gdi32\GetEnhMetaFilePaletteEntries', 'ptr', hemf, 'uint', cEntries, 'ptr', lppe, 'uint')
+
+	static GetEnhMetaFilePixelFormat(hemf, cbBuffer, ppfd) => DllCall('Gdi32\GetEnhMetaFilePixelFormat', 'ptr', hemf, 'uint', cbBuffer, 'ptr', ppfd, 'uint')
+
+	static GetFontData(hdc, dwTable, dwOffset, lpvBuffer, cbData) => DllCall('Gdi32\GetFontData', 'ptr', hdc, 'uint', dwTable, 'uint', dwOffset, 'ptr', lpvBuffer, 'uint', cbData, 'uint')
+
+	static GetFontLanguageInfo(hdc) => DllCall('Gdi32\GetFontLanguageInfo', 'ptr', hdc, 'uint')
+
+	static GetFontUnicodeRanges(hdc, lpgs) => DllCall('Gdi32\GetFontUnicodeRanges', 'ptr', hdc, 'ptr', lpgs, 'uint')
+
+	static GetGlyphIndices(hdc, lpstr, c, pgi, fl) => DllCall('Gdi32\GetGlyphIndices', 'ptr', hdc, 'str', lpstr, 'int', c, 'ptr', pgi, 'uint', fl, 'uint')
+
+	static GetGlyphOutline(hdc, uChar, uFormat, lpgm, cbBuffer, lpvBuffer, lpmat2) => DllCall('Gdi32\GetGlyphOutline', 'ptr', hdc, 'uint', uChar, 'uint', uFormat, 'ptr', lpgm, 'uint', cbBuffer, 'ptr', lpvBuffer, 'ptr', lpmat2, 'uint')
+
+	static GetGraphicsMode(hdc) => DllCall('Gdi32\GetGraphicsMode', 'ptr', hdc, 'int')
+
+	static GetICMProfile(hDC, lpcbName, lpszFilename) => DllCall('Gdi32\GetICMProfile', 'ptr', hDC, 'ptr', lpcbName, 'str', lpszFilename, 'int')
+
+	static GetKerningPairs(hdc, nNumPairs, lpkrnpair) => DllCall('Gdi32\GetKerningPairs', 'ptr', hdc, 'uint', nNumPairs, 'ptr', lpkrnpair, 'uint')
+
+	static GetLayout(hdc) => DllCall('Gdi32\GetLayout', 'ptr', hdc, 'uint')
+
+	static GetLogColorSpace(hColorSpace, lpBuffer, nSize) => DllCall('Gdi32\GetLogColorSpace', 'ptr', hColorSpace, 'ptr', lpBuffer, 'uint', nSize, 'int')
+
+	static GetMapMode(hdc) => DllCall('Gdi32\GetMapMode', 'ptr', hdc, 'int')
+
+	static GetMetaFileBitsEx(hmf, nSize, lpvData) => DllCall('Gdi32\GetMetaFileBitsEx', 'ptr', hmf, 'uint', nSize, 'ptr', lpvData, 'uint')
+
+	static GetMetaRgn(hdc, hrgn) => DllCall('Gdi32\GetMetaRgn', 'ptr', hdc, 'ptr', hrgn, 'int')
+
+	static GetMiterLimit(hdc, peLimit) => DllCall('Gdi32\GetMiterLimit', 'ptr', hdc, 'ptr', peLimit, 'int')
+
+	static GetNearestColor(hdc, crColor) => DllCall('Gdi32\GetNearestColor', 'ptr', hdc, 'uint', crColor, 'uint')
+
+	static GetNearestPaletteIndex(hpal, crColor) => DllCall('Gdi32\GetNearestPaletteIndex', 'ptr', hpal, 'uint', crColor, 'uint')
+
+	static GetNumberOfPhysicalMonitors(pstrDeviceName, pdwNumberOfPhysicalMonitors) => DllCall('Gdi32\GetNumberOfPhysicalMonitors', 'wstr', pstrDeviceName, 'ptr', pdwNumberOfPhysicalMonitors, 'int')
+
+	static GetObject(hgdiobj, cbBuffer, lpvObject) => DllCall('Gdi32\GetObject', 'ptr', hgdiobj, 'int', cbBuffer, 'ptr', lpvObject, 'int')
+
+	static GetObjectType(h) => DllCall('Gdi32\GetObjectType', 'ptr', h, 'uint')
+
+	static GetOutlineTextMetrics(hdc, cbData, lpOTM) => DllCall('Gdi32\GetOutlineTextMetrics', 'ptr', hdc, 'uint', cbData, 'ptr', lpOTM, 'uint')
+
+	static GetPaletteEntries(hpal, iStartIndex, nEntries, lppe) => DllCall('Gdi32\GetPaletteEntries', 'ptr', hpal, 'uint', iStartIndex, 'uint', nEntries, 'ptr', lppe, 'uint')
+
+	static GetPath(hdc, lpPoints, lpTypes, nSize) => DllCall('Gdi32\GetPath', 'ptr', hdc, 'ptr', lpPoints, 'ptr', lpTypes, 'int', nSize, 'int')
+
+	static GetPhysicalMonitorDescription(hMonitor, dwPhysicalMonitorDescriptionSizeInChars, szPhysicalMonitorDescription) => DllCall('Gdi32\GetPhysicalMonitorDescription', 'ptr', hMonitor, 'uint', dwPhysicalMonitorDescriptionSizeInChars, 'wstr', szPhysicalMonitorDescription, 'int')
+
+	static GetPhysicalMonitors(pstrDeviceName, dwPhysicalMonitorArraySize, &pdwNumPhysicalMonitorHandlesInArray, phPhysicalMonitorArray) => DllCall('Gdi32\GetPhysicalMonitors', 'wstr', pstrDeviceName, 'uint', dwPhysicalMonitorArraySize, 'uint*', &pdwNumPhysicalMonitorHandlesInArray, 'ptr', phPhysicalMonitorArray, 'int')
+
+	static GetPixel(hdc, nXPos, nYPos) => DllCall('Gdi32\GetPixel', 'ptr', hdc, 'int', nXPos, 'int', nYPos, 'uint')
+
+	static GetPixelFormat(hDC) => DllCall('Gdi32\GetPixelFormat', 'ptr', hDC, 'int')
+
+	static GetPolyFillMode(hdc) => DllCall('Gdi32\GetPolyFillMode', 'ptr', hdc, 'int')
+
+	static GetROP2(hdc) => DllCall('Gdi32\GetROP2', 'ptr', hdc, 'int')
+
+	static GetRandomRgn(hdc, hrgn, iNum) => DllCall('Gdi32\GetRandomRgn', 'ptr', hdc, 'ptr', hrgn, 'int', iNum, 'int')
+
+	static GetRasterizerCaps(lprs, cb) => DllCall('Gdi32\GetRasterizerCaps', 'ptr', lprs, 'uint', cb, 'int')
+
+	static GetRegionData(hRgn, dwCount, lpRgnData) => DllCall('Gdi32\GetRegionData', 'ptr', hRgn, 'uint', dwCount, 'ptr', lpRgnData, 'uint')
+
+	static GetRgnBox(hrgn, lprc) => DllCall('Gdi32\GetRgnBox', 'ptr', hrgn, 'ptr', lprc, 'int')
+
+	static GetStockObject(fnObject) => DllCall('Gdi32\GetStockObject', 'int', fnObject, 'ptr')
+
+	static GetStretchBltMode(hdc) => DllCall('Gdi32\GetStretchBltMode', 'ptr', hdc, 'int')
+
+	static GetSystemPaletteEntries(hdc, iStartIndex, nEntries, lppe) => DllCall('Gdi32\GetSystemPaletteEntries', 'ptr', hdc, 'uint', iStartIndex, 'uint', nEntries, 'ptr', lppe, 'uint')
+
+	static GetSystemPaletteUse(hdc) => DllCall('Gdi32\GetSystemPaletteUse', 'ptr', hdc, 'uint')
+
+	static GetTextAlign(hdc) => DllCall('Gdi32\GetTextAlign', 'ptr', hdc, 'uint')
+
+	static GetTextCharacterExtra(hdc) => DllCall('Gdi32\GetTextCharacterExtra', 'ptr', hdc, 'int')
+
+	static GetTextCharset(hdc) => DllCall('Gdi32\GetTextCharset', 'ptr', hdc, 'int')
+
+	static GetTextCharsetInfo(hdc, lpSig, dwFlags) => DllCall('Gdi32\GetTextCharsetInfo', 'ptr', hdc, 'ptr', lpSig, 'uint', dwFlags, 'int')
+
+	static GetTextColor(hdc) => DllCall('Gdi32\GetTextColor', 'ptr', hdc, 'uint')
+
+	static GetTextExtentExPoint(hdc, lpszStr, cchString, nMaxExtent, lpnFit, alpDx, lpSize) => DllCall('Gdi32\GetTextExtentExPoint', 'ptr', hdc, 'str', lpszStr, 'int', cchString, 'int', nMaxExtent, 'ptr', lpnFit, 'ptr', alpDx, 'ptr', lpSize, 'int')
+
+	static GetTextExtentExPointI(hdc, pgiIn, cgi, nMaxExtent, lpnFit, alpDx, lpSize) => DllCall('Gdi32\GetTextExtentExPointI', 'ptr', hdc, 'ptr', pgiIn, 'int', cgi, 'int', nMaxExtent, 'ptr', lpnFit, 'ptr', alpDx, 'ptr', lpSize, 'int')
+
+	static GetTextExtentPoint(hdc, lpString, cbString, lpSize) => DllCall('Gdi32\GetTextExtentPoint', 'ptr', hdc, 'str', lpString, 'int', cbString, 'ptr', lpSize, 'int')
+
+	static GetTextExtentPoint32(hdc, lpString, c, lpSize) => DllCall('Gdi32\GetTextExtentPoint32', 'ptr', hdc, 'str', lpString, 'int', c, 'ptr', lpSize, 'int')
+
+	static GetTextExtentPointI(hdc, pgiIn, cgi, lpSize) => DllCall('Gdi32\GetTextExtentPointI', 'ptr', hdc, 'ptr', pgiIn, 'int', cgi, 'ptr', lpSize, 'int')
+
+	static GetTextFace(hdc, nCount, lpFaceName) => DllCall('Gdi32\GetTextFace', 'ptr', hdc, 'int', nCount, 'str', lpFaceName, 'int')
+
+	static GetTextMetrics(hdc, lptm) => DllCall('Gdi32\GetTextMetrics', 'ptr', hdc, 'ptr', lptm, 'int')
+
+	static GetViewportExtEx(hdc, lpSize) => DllCall('Gdi32\GetViewportExtEx', 'ptr', hdc, 'ptr', lpSize, 'int')
+
+	static GetViewportOrgEx(hdc, lpPoint) => DllCall('Gdi32\GetViewportOrgEx', 'ptr', hdc, 'ptr', lpPoint, 'int')
+
+	static GetWinMetaFileBits(hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef) => DllCall('Gdi32\GetWinMetaFileBits', 'ptr', hemf, 'uint', cbBuffer, 'ptr', lpbBuffer, 'int', fnMapMode, 'ptr', hdcRef, 'uint')
+
+	static GetWindowExtEx(hdc, lpSize) => DllCall('Gdi32\GetWindowExtEx', 'ptr', hdc, 'ptr', lpSize, 'int')
+
+	static GetWindowOrgEx(hdc, lpPoint) => DllCall('Gdi32\GetWindowOrgEx', 'ptr', hdc, 'ptr', lpPoint, 'int')
+
+	static GetWorldTransform(hdc, lpXform) => DllCall('Gdi32\GetWorldTransform', 'ptr', hdc, 'ptr', lpXform, 'int')
+
+	static IntersectClipRect(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect) => DllCall('Gdi32\IntersectClipRect', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int')
+
+	static InvertRgn(hdc, hrgn) => DllCall('Gdi32\InvertRgn', 'ptr', hdc, 'ptr', hrgn, 'int')
+
+	static LPtoDP(hdc, lpPoints, nCount) => DllCall('Gdi32\LPtoDP', 'ptr', hdc, 'ptr', lpPoints, 'int', nCount, 'int')
+
+	static LineDDA(nXStart, nYStart, nXEnd, nYEnd, lpLineFunc, lpData) => DllCall('Gdi32\LineDDA', 'int', nXStart, 'int', nYStart, 'int', nXEnd, 'int', nYEnd, 'ptr', lpLineFunc, 'uptr', lpData, 'int')
+
+	static LineTo(hdc, nXEnd, nYEnd) => DllCall('Gdi32\LineTo', 'ptr', hdc, 'int', nXEnd, 'int', nYEnd, 'int')
+
+	static MaskBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, hbmMask, xMask, yMask, dwRop) => DllCall('Gdi32\MaskBlt', 'ptr', hdcDest, 'int', nXDest, 'int', nYDest, 'int', nWidth, 'int', nHeight, 'ptr', hdcSrc, 'int', nXSrc, 'int', nYSrc, 'ptr', hbmMask, 'int', xMask, 'int', yMask, 'uint', dwRop, 'int')
+
+	static ModifyWorldTransform(hdc, lpXform, iMode) => DllCall('Gdi32\ModifyWorldTransform', 'ptr', hdc, 'ptr', lpXform, 'uint', iMode, 'int')
+
+	static MoveToEx(hdc, X, Y, lpPoint) => DllCall('Gdi32\MoveToEx', 'ptr', hdc, 'int', X, 'int', Y, 'ptr', lpPoint, 'int')
+
+	static OffsetClipRgn(hdc, nXOffset, nYOffset) => DllCall('Gdi32\OffsetClipRgn', 'ptr', hdc, 'int', nXOffset, 'int', nYOffset, 'int')
+
+	static OffsetRgn(hrgn, nXOffset, nYOffset) => DllCall('Gdi32\OffsetRgn', 'ptr', hrgn, 'int', nXOffset, 'int', nYOffset, 'int')
+
+	static OffsetViewportOrgEx(hdc, nXOffset, nYOffset, lpPoint) => DllCall('Gdi32\OffsetViewportOrgEx', 'ptr', hdc, 'int', nXOffset, 'int', nYOffset, 'ptr', lpPoint, 'int')
+
+	static OffsetWindowOrgEx(hdc, nXOffset, nYOffset, lpPoint) => DllCall('Gdi32\OffsetWindowOrgEx', 'ptr', hdc, 'int', nXOffset, 'int', nYOffset, 'ptr', lpPoint, 'int')
+
+	static PaintRgn(hdc, hrgn) => DllCall('Gdi32\PaintRgn', 'ptr', hdc, 'ptr', hrgn, 'int')
+
+	static PatBlt(hdc, nXLeft, nYLeft, nWidth, nHeight, dwRop) => DllCall('Gdi32\PatBlt', 'ptr', hdc, 'int', nXLeft, 'int', nYLeft, 'int', nWidth, 'int', nHeight, 'uint', dwRop, 'int')
+
+	static PathToRegion(hdc) => DllCall('Gdi32\PathToRegion', 'ptr', hdc, 'ptr')
+
+	static Pie(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect, nXRadial1, nYRadial1, nXRadial2, nYRadial2) => DllCall('Gdi32\Pie', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int', nXRadial1, 'int', nYRadial1, 'int', nXRadial2, 'int', nYRadial2, 'int')
+
+	static PlayEnhMetaFile(hdc, hemf, lpRect) => DllCall('Gdi32\PlayEnhMetaFile', 'ptr', hdc, 'ptr', hemf, 'ptr', lpRect, 'int')
+
+	static PlayEnhMetaFileRecord(hdc, lpHandletable, lpEnhMetaRecord, nHandles) => DllCall('Gdi32\PlayEnhMetaFileRecord', 'ptr', hdc, 'ptr', lpHandletable, 'ptr', lpEnhMetaRecord, 'uint', nHandles, 'int')
+
+	static PlayMetaFile(hdc, hmf) => DllCall('Gdi32\PlayMetaFile', 'ptr', hdc, 'ptr', hmf, 'int')
+
+	static PlayMetaFileRecord(hdc, lpHandletable, lpMetaRecord, nHandles) => DllCall('Gdi32\PlayMetaFileRecord', 'ptr', hdc, 'ptr', lpHandletable, 'ptr', lpMetaRecord, 'uint', nHandles, 'int')
+
+	static PlgBlt(hdcDest, lpPoint, hdcSrc, nXSrc, nYSrc, nWidth, nHeight, hbmMask, xMask, yMask) => DllCall('Gdi32\PlgBlt', 'ptr', hdcDest, 'ptr', lpPoint, 'ptr', hdcSrc, 'int', nXSrc, 'int', nYSrc, 'int', nWidth, 'int', nHeight, 'ptr', hbmMask, 'int', xMask, 'int', yMask, 'int')
+
+	static PolyBezier(hdc, lppt, cPoints) => DllCall('Gdi32\PolyBezier', 'ptr', hdc, 'ptr', lppt, 'uint', cPoints, 'int')
+
+	static PolyBezierTo(hdc, lppt, cCount) => DllCall('Gdi32\PolyBezierTo', 'ptr', hdc, 'ptr', lppt, 'uint', cCount, 'int')
+
+	static PolyDraw(hdc, lppt, &lpbTypes, cCount) => DllCall('Gdi32\PolyDraw', 'ptr', hdc, 'ptr', lppt, 'uchar*', &lpbTypes, 'int', cCount, 'int')
+
+	static PolyPolygon(hdc, lpPoints, &lpPolyCounts, nCount) => DllCall('Gdi32\PolyPolygon', 'ptr', hdc, 'ptr', lpPoints, 'int*', &lpPolyCounts, 'int', nCount, 'int')
+
+	static PolyPolyline(hdc, lppt, &lpdwPolyPoints, cCount) => DllCall('Gdi32\PolyPolyline', 'ptr', hdc, 'ptr', lppt, 'uint*', &lpdwPolyPoints, 'uint', cCount, 'int')
+
+	static PolyTextOut(hdc, pptxt, cStrings) => DllCall('Gdi32\PolyTextOut', 'ptr', hdc, 'ptr', pptxt, 'int', cStrings, 'int')
+
+	static Polygon(hdc, lpPoints, nCount) => DllCall('Gdi32\Polygon', 'ptr', hdc, 'ptr', lpPoints, 'int', nCount, 'int')
+
+	static Polyline(hdc, lppt, cPoints) => DllCall('Gdi32\Polyline', 'ptr', hdc, 'ptr', lppt, 'int', cPoints, 'int')
+
+	static PolylineTo(hdc, lppt, cCount) => DllCall('Gdi32\PolylineTo', 'ptr', hdc, 'ptr', lppt, 'uint', cCount, 'int')
+
+	static PtInRegion(hrgn, X, Y) => DllCall('Gdi32\PtInRegion', 'ptr', hrgn, 'int', X, 'int', Y, 'int')
+
+	static PtVisible(hdc, X, Y) => DllCall('Gdi32\PtVisible', 'ptr', hdc, 'int', X, 'int', Y, 'int')
+
+	static RealizePalette(hdc) => DllCall('Gdi32\RealizePalette', 'ptr', hdc, 'uint')
+
+	static RectInRegion(hrgn, lprc) => DllCall('Gdi32\RectInRegion', 'ptr', hrgn, 'ptr', lprc, 'int')
+
+	static RectVisible(hDC, lprc) => DllCall('Gdi32\RectVisible', 'ptr', hDC, 'ptr', lprc, 'int')
+
+	static Rectangle(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect) => DllCall('Gdi32\Rectangle', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int')
+
+	static RemoveFontMemResourceEx(fh) => DllCall('Gdi32\RemoveFontMemResourceEx', 'ptr', fh, 'int')
+
+	static RemoveFontResource(lpFileName) => DllCall('Gdi32\RemoveFontResource', 'str', lpFileName, 'int')
+
+	static RemoveFontResourceEx(lpFileName, fl, pdv) => DllCall('Gdi32\RemoveFontResourceEx', 'str', lpFileName, 'uint', fl, 'ptr', pdv, 'int')
+
+	static ResetDC(hdc, lpInitData) => DllCall('Gdi32\ResetDC', 'ptr', hdc, 'ptr', lpInitData, 'ptr')
+
+	static ResizePalette(hpal, nEntries) => DllCall('Gdi32\ResizePalette', 'ptr', hpal, 'uint', nEntries, 'int')
+
+	static RestoreDC(hdc, nSavedDC) => DllCall('Gdi32\RestoreDC', 'ptr', hdc, 'int', nSavedDC, 'int')
+
+	static RoundRect(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect, nWidth, nHeight) => DllCall('Gdi32\RoundRect', 'ptr', hdc, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int', nWidth, 'int', nHeight, 'int')
+
+	static SaveDC(hdc) => DllCall('Gdi32\SaveDC', 'ptr', hdc, 'int')
+
+	static ScaleViewportExtEx(hdc, Xnum, Xdenom, Ynum, Ydenom, lpSize) => DllCall('Gdi32\ScaleViewportExtEx', 'ptr', hdc, 'int', Xnum, 'int', Xdenom, 'int', Ynum, 'int', Ydenom, 'ptr', lpSize, 'int')
+
+	static ScaleWindowExtEx(hdc, Xnum, Xdenom, Ynum, Ydenom, lpSize) => DllCall('Gdi32\ScaleWindowExtEx', 'ptr', hdc, 'int', Xnum, 'int', Xdenom, 'int', Ynum, 'int', Ydenom, 'ptr', lpSize, 'int')
+
+	static SelectClipPath(hdc, iMode) => DllCall('Gdi32\SelectClipPath', 'ptr', hdc, 'int', iMode, 'int')
+
+	static SelectClipRgn(hdc, hrgn) => DllCall('Gdi32\SelectClipRgn', 'ptr', hdc, 'ptr', hrgn, 'int')
+
+	static SelectObject(hdc, hgdiobj) => DllCall('Gdi32\SelectObject', 'ptr', hdc, 'ptr', hgdiobj, 'ptr')
+
+	static SelectPalette(hdc, hpal, bForceBackground) => DllCall('Gdi32\SelectPalette', 'ptr', hdc, 'ptr', hpal, 'int', bForceBackground, 'ptr')
+
+	static SetAbortProc(hdc, lpAbortProc) => DllCall('Gdi32\SetAbortProc', 'ptr', hdc, 'ptr', lpAbortProc, 'int')
+
+	static SetArcDirection(hdc, ArcDirection) => DllCall('Gdi32\SetArcDirection', 'ptr', hdc, 'int', ArcDirection, 'int')
+
+	static SetBitmapBits(hbmp, cBytes, lpBits) => DllCall('Gdi32\SetBitmapBits', 'ptr', hbmp, 'uint', cBytes, 'ptr', lpBits, 'int')
+
+	static SetBitmapDimensionEx(hBitmap, nWidth, nHeight, lpSize) => DllCall('Gdi32\SetBitmapDimensionEx', 'ptr', hBitmap, 'int', nWidth, 'int', nHeight, 'ptr', lpSize, 'int')
+
+	static SetBkColor(hdc, crColor) => DllCall('Gdi32\SetBkColor', 'ptr', hdc, 'uint', crColor, 'uint')
+
+	static SetBkMode(hdc, iBkMode) => DllCall('Gdi32\SetBkMode', 'ptr', hdc, 'int', iBkMode, 'int')
+
+	static SetBoundsRect(hdc, lprcBounds, flags) => DllCall('Gdi32\SetBoundsRect', 'ptr', hdc, 'ptr', lprcBounds, 'uint', flags, 'uint')
+
+	static SetBrushOrgEx(hdc, nXOrg, nYOrg, lppt) => DllCall('Gdi32\SetBrushOrgEx', 'ptr', hdc, 'int', nXOrg, 'int', nYOrg, 'ptr', lppt, 'int')
+
+	static SetColorAdjustment(hdc, lpca) => DllCall('Gdi32\SetColorAdjustment', 'ptr', hdc, 'ptr', lpca, 'int')
+
+	static SetColorSpace(hDC, hColorSpace) => DllCall('Gdi32\SetColorSpace', 'ptr', hDC, 'ptr', hColorSpace, 'ptr')
+
+	static SetDCBrushColor(hdc, crColor) => DllCall('Gdi32\SetDCBrushColor', 'ptr', hdc, 'uint', crColor, 'uint')
+
+	static SetDCPenColor(hdc, crColor) => DllCall('Gdi32\SetDCPenColor', 'ptr', hdc, 'uint', crColor, 'uint')
+
+	static SetDIBColorTable(hdc, uStartIndex, cEntries, pColors) => DllCall('Gdi32\SetDIBColorTable', 'ptr', hdc, 'uint', uStartIndex, 'uint', cEntries, 'ptr', pColors, 'uint')
+
+	static SetDIBits(hdc, hbmp, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse) => DllCall('Gdi32\SetDIBits', 'ptr', hdc, 'ptr', hbmp, 'uint', uStartScan, 'uint', cScanLines, 'ptr', lpvBits, 'ptr', lpbmi, 'uint', fuColorUse, 'int')
+
+	static SetDIBitsToDevice(hdc, XDest, YDest, dwWidth, dwHeight, XSrc, YSrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse) => DllCall('Gdi32\SetDIBitsToDevice', 'ptr', hdc, 'int', XDest, 'int', YDest, 'uint', dwWidth, 'uint', dwHeight, 'int', XSrc, 'int', YSrc, 'uint', uStartScan, 'uint', cScanLines, 'ptr', lpvBits, 'ptr', lpbmi, 'uint', fuColorUse, 'int')
+
+	static SetDeviceGammaRamp(hDC, lpRamp) => DllCall('Gdi32\SetDeviceGammaRamp', 'ptr', hDC, 'ptr', lpRamp, 'int')
+
+	static SetEnhMetaFileBits(cbBuffer, &lpData) => DllCall('Gdi32\SetEnhMetaFileBits', 'uint', cbBuffer, 'uchar*', &lpData, 'ptr')
+
+	static SetGraphicsMode(hdc, iMode) => DllCall('Gdi32\SetGraphicsMode', 'ptr', hdc, 'int', iMode, 'int')
+
+	static SetICMMode(hDC, iEnableICM) => DllCall('Gdi32\SetICMMode', 'ptr', hDC, 'int', iEnableICM, 'int')
+
+	static SetICMProfile(hDC, lpFileName) => DllCall('Gdi32\SetICMProfile', 'ptr', hDC, 'str', lpFileName, 'int')
+
+	static SetLayout(hdc, dwLayout) => DllCall('Gdi32\SetLayout', 'ptr', hdc, 'uint', dwLayout, 'uint')
+
+	static SetMapMode(hdc, fnMapMode) => DllCall('Gdi32\SetMapMode', 'ptr', hdc, 'int', fnMapMode, 'int')
+
+	static SetMapperFlags(hdc, dwFlag) => DllCall('Gdi32\SetMapperFlags', 'ptr', hdc, 'uint', dwFlag, 'uint')
+
+	static SetMetaFileBitsEx(nSize, &lpData) => DllCall('Gdi32\SetMetaFileBitsEx', 'uint', nSize, 'uchar*', &lpData, 'ptr')
+
+	static SetMetaRgn(hdc) => DllCall('Gdi32\SetMetaRgn', 'ptr', hdc, 'int')
+
+	static SetMiterLimit(hdc, eNewLimit, peOldLimit) => DllCall('Gdi32\SetMiterLimit', 'ptr', hdc, 'float', eNewLimit, 'ptr', peOldLimit, 'int')
+
+	static SetPaletteEntries(hpal, iStart, cEntries, lppe) => DllCall('Gdi32\SetPaletteEntries', 'ptr', hpal, 'uint', iStart, 'uint', cEntries, 'ptr', lppe, 'uint')
+
+	static SetPixel(hdc, X, Y, crColor) => DllCall('Gdi32\SetPixel', 'ptr', hdc, 'int', X, 'int', Y, 'uint', crColor, 'uint')
+
+	static SetPixelFormat(hdc, iPixelFormat, ppfd) => DllCall('Gdi32\SetPixelFormat', 'ptr', hdc, 'int', iPixelFormat, 'ptr', ppfd, 'int')
+
+	static SetPixelV(hdc, X, Y, crColor) => DllCall('Gdi32\SetPixelV', 'ptr', hdc, 'int', X, 'int', Y, 'uint', crColor, 'int')
+
+	static SetPolyFillMode(hdc, iPolyFillMode) => DllCall('Gdi32\SetPolyFillMode', 'ptr', hdc, 'int', iPolyFillMode, 'int')
+
+	static SetROP2(hdc, fnDrawMode) => DllCall('Gdi32\SetROP2', 'ptr', hdc, 'int', fnDrawMode, 'int')
+
+	static SetRectRgn(hrgn, nLeftRect, nTopRect, nRightRect, nBottomRect) => DllCall('Gdi32\SetRectRgn', 'ptr', hrgn, 'int', nLeftRect, 'int', nTopRect, 'int', nRightRect, 'int', nBottomRect, 'int')
+
+	static SetStretchBltMode(hdc, iStretchMode) => DllCall('Gdi32\SetStretchBltMode', 'ptr', hdc, 'int', iStretchMode, 'int')
+
+	static SetSystemPaletteUse(hdc, uUsage) => DllCall('Gdi32\SetSystemPaletteUse', 'ptr', hdc, 'uint', uUsage, 'uint')
+
+	static SetTextAlign(hdc, fMode) => DllCall('Gdi32\SetTextAlign', 'ptr', hdc, 'uint', fMode, 'uint')
+
+	static SetTextCharacterExtra(hdc, nCharExtra) => DllCall('Gdi32\SetTextCharacterExtra', 'ptr', hdc, 'int', nCharExtra, 'int')
+
+	static SetTextColor(hdc, crColor) => DllCall('Gdi32\SetTextColor', 'ptr', hdc, 'uint', crColor, 'uint')
+
+	static SetTextJustification(hdc, nBreakExtra, nBreakCount) => DllCall('Gdi32\SetTextJustification', 'ptr', hdc, 'int', nBreakExtra, 'int', nBreakCount, 'int')
+
+	static SetViewportExtEx(hdc, nXExtent, nYExtent, lpSize) => DllCall('Gdi32\SetViewportExtEx', 'ptr', hdc, 'int', nXExtent, 'int', nYExtent, 'ptr', lpSize, 'int')
+
+	static SetViewportOrgEx(hdc, X, Y, lpPoint) => DllCall('Gdi32\SetViewportOrgEx', 'ptr', hdc, 'int', X, 'int', Y, 'ptr', lpPoint, 'int')
+
+	static SetWinMetaFileBits(cbBuffer, &lpbBuffer, hdcRef, lpmfp) => DllCall('Gdi32\SetWinMetaFileBits', 'uint', cbBuffer, 'uchar*', &lpbBuffer, 'ptr', hdcRef, 'ptr', lpmfp, 'ptr')
+
+	static SetWindowExtEx(hdc, nXExtent, nYExtent, lpSize) => DllCall('Gdi32\SetWindowExtEx', 'ptr', hdc, 'int', nXExtent, 'int', nYExtent, 'ptr', lpSize, 'int')
+
+	static SetWindowOrgEx(hdc, X, Y, lpPoint) => DllCall('Gdi32\SetWindowOrgEx', 'ptr', hdc, 'int', X, 'int', Y, 'ptr', lpPoint, 'int')
+
+	static SetWorldTransform(hdc, lpXform) => DllCall('Gdi32\SetWorldTransform', 'ptr', hdc, 'ptr', lpXform, 'int')
+
+	static StartDoc(hdc, lpdi) => DllCall('Gdi32\StartDoc', 'ptr', hdc, 'ptr', lpdi, 'int')
+
+	static StartPage(hdc) => DllCall('Gdi32\StartPage', 'ptr', hdc, 'int')
+
+	static StretchBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, dwRop) => DllCall('Gdi32\StretchBlt', 'ptr', hdcDest, 'int', nXOriginDest, 'int', nYOriginDest, 'int', nWidthDest, 'int', nHeightDest, 'ptr', hdcSrc, 'int', nXOriginSrc, 'int', nYOriginSrc, 'int', nWidthSrc, 'int', nHeightSrc, 'uint', dwRop, 'int')
+
+	static StretchDIBits(hdc, XDest, YDest, nDestWidth, nDestHeight, XSrc, YSrc, nSrcWidth, nSrcHeight, lpBits, lpBitsInfo, iUsage, dwRop) => DllCall('Gdi32\StretchDIBits', 'ptr', hdc, 'int', XDest, 'int', YDest, 'int', nDestWidth, 'int', nDestHeight, 'int', XSrc, 'int', YSrc, 'int', nSrcWidth, 'int', nSrcHeight, 'ptr', lpBits, 'ptr', lpBitsInfo, 'uint', iUsage, 'uint', dwRop, 'int')
+
+	static StrokeAndFillPath(hdc) => DllCall('Gdi32\StrokeAndFillPath', 'ptr', hdc, 'int')
+
+	static StrokePath(hdc) => DllCall('Gdi32\StrokePath', 'ptr', hdc, 'int')
+
+	static SwapBuffers(hDC) => DllCall('Gdi32\SwapBuffers', 'ptr', hDC, 'int')
+
+	static TextOut(hdc, nXStart, nYStart, lpString, cchString) => DllCall('Gdi32\TextOut', 'ptr', hdc, 'int', nXStart, 'int', nYStart, 'str', lpString, 'int', cchString, 'int')
+
+	static TranslateCharsetInfo(lpSrc, lpCs, dwFlags) => DllCall('Gdi32\TranslateCharsetInfo', 'ptr', lpSrc, 'ptr', lpCs, 'uint', dwFlags, 'int')
+
+	static UnrealizeObject(hgdiobj) => DllCall('Gdi32\UnrealizeObject', 'ptr', hgdiobj, 'int')
+
+	static UpdateColors(hdc) => DllCall('Gdi32\UpdateColors', 'ptr', hdc, 'int')
+
+	static UpdateICMRegKey(dwReserved, lpszCMID, lpszFileName, nCommand) => DllCall('Gdi32\UpdateICMRegKey', 'uint', dwReserved, 'str', lpszCMID, 'str', lpszFileName, 'uint', nCommand, 'int')
+
+	static WidenPath(hdc) => DllCall('Gdi32\WidenPath', 'ptr', hdc, 'int')
+	
 	;#endregion
+
+	;#region __Gdiplus
+
+	static GdipAddPathArc(path, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipAddPathArc', 'ptr', path, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipAddPathArcI(path, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipAddPathArcI', 'ptr', path, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipAddPathBezier(path, x1, y1, x2, y2, x3, y3, x4, y4) => DllCall('Gdiplus\GdipAddPathBezier', 'ptr', path, 'int', x1, 'int', y1, 'int', x2, 'int', y2, 'int', x3, 'int', y3, 'int', x4, 'int', y4, 'uint')
+
+	static GdipAddPathBezierI(path, x1, y1, x2, y2, x3, y3, x4, y4) => DllCall('Gdiplus\GdipAddPathBezierI', 'ptr', path, 'int', x1, 'int', y1, 'int', x2, 'int', y2, 'int', x3, 'int', y3, 'int', x4, 'int', y4, 'uint')
+
+	static GdipAddPathBeziers(path, points, count) => DllCall('Gdiplus\GdipAddPathBeziers', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathBeziersI(path, points, count) => DllCall('Gdiplus\GdipAddPathBeziersI', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathClosedCurve(path, points, count) => DllCall('Gdiplus\GdipAddPathClosedCurve', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathClosedCurve2(path, points, count, tension) => DllCall('Gdiplus\GdipAddPathClosedCurve2', 'ptr', path, 'ptr', points, 'int', count, 'int', tension, 'uint')
+
+	static GdipAddPathClosedCurve2I(path, points, count, tension) => DllCall('Gdiplus\GdipAddPathClosedCurve2I', 'ptr', path, 'ptr', points, 'int', count, 'int', tension, 'uint')
+
+	static GdipAddPathClosedCurveI(path, points, count) => DllCall('Gdiplus\GdipAddPathClosedCurveI', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathCurve(path, points, count) => DllCall('Gdiplus\GdipAddPathCurve', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathCurve2(path, points, count, tension) => DllCall('Gdiplus\GdipAddPathCurve2', 'ptr', path, 'ptr', points, 'int', count, 'int', tension, 'uint')
+
+	static GdipAddPathCurve2I(path, points, count, tension) => DllCall('Gdiplus\GdipAddPathCurve2I', 'ptr', path, 'ptr', points, 'int', count, 'int', tension, 'uint')
+
+	static GdipAddPathCurve3(path, points, count, offset, numberOfSegments, tension) => DllCall('Gdiplus\GdipAddPathCurve3', 'ptr', path, 'ptr', points, 'int', count, 'int', offset, 'int', numberOfSegments, 'int', tension, 'uint')
+
+	static GdipAddPathCurve3I(path, points, count, offset, numberOfSegments, tension) => DllCall('Gdiplus\GdipAddPathCurve3I', 'ptr', path, 'ptr', points, 'int', count, 'int', offset, 'int', numberOfSegments, 'int', tension, 'uint')
+
+	static GdipAddPathCurveI(path, points, count) => DllCall('Gdiplus\GdipAddPathCurveI', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathEllipse(path, x, y, width, height) => DllCall('Gdiplus\GdipAddPathEllipse', 'ptr', path, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipAddPathEllipseI(path, x, y, width, height) => DllCall('Gdiplus\GdipAddPathEllipseI', 'ptr', path, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipAddPathLine(path, x1, y1, x2, y2) => DllCall('Gdiplus\GdipAddPathLine', 'ptr', path, 'int', x1, 'int', y1, 'int', x2, 'int', y2, 'uint')
+
+	static GdipAddPathLine2(path, points, count) => DllCall('Gdiplus\GdipAddPathLine2', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathLine2I(path, points, count) => DllCall('Gdiplus\GdipAddPathLine2I', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathLineI(path, x1, y1, x2, y2) => DllCall('Gdiplus\GdipAddPathLineI', 'ptr', path, 'int', x1, 'int', y1, 'int', x2, 'int', y2, 'uint')
+
+	static GdipAddPathPath(path, addingPath, connect) => DllCall('Gdiplus\GdipAddPathPath', 'ptr', path, 'ptr', addingPath, 'int', connect, 'uint')
+
+	static GdipAddPathPie(path, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipAddPathPie', 'ptr', path, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipAddPathPieI(path, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipAddPathPieI', 'ptr', path, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipAddPathPolygon(path, points, count) => DllCall('Gdiplus\GdipAddPathPolygon', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathPolygonI(path, points, count) => DllCall('Gdiplus\GdipAddPathPolygonI', 'ptr', path, 'ptr', points, 'int', count, 'uint')
+
+	static GdipAddPathRectangle(path, x, y, width, height) => DllCall('Gdiplus\GdipAddPathRectangle', 'ptr', path, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipAddPathRectangleI(path, x, y, width, height) => DllCall('Gdiplus\GdipAddPathRectangleI', 'ptr', path, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipAddPathRectangles(path, rects, count) => DllCall('Gdiplus\GdipAddPathRectangles', 'ptr', path, 'ptr', rects, 'int', count, 'uint')
+
+	static GdipAddPathRectanglesI(path, rects, count) => DllCall('Gdiplus\GdipAddPathRectanglesI', 'ptr', path, 'ptr', rects, 'int', count, 'uint')
+
+	static GdipAddPathString(path, string, length, family, style, emSize, layoutRect, format) => DllCall('Gdiplus\GdipAddPathString', 'ptr', path, 'ptr', string, 'int', length, 'ptr', family, 'int', style, 'int', emSize, 'ptr', layoutRect, 'ptr', format, 'uint')
+
+	static GdipAddPathStringI(path, string, length, family, style, emSize, layoutRect, format) => DllCall('Gdiplus\GdipAddPathStringI', 'ptr', path, 'ptr', string, 'int', length, 'ptr', family, 'int', style, 'int', emSize, 'ptr', layoutRect, 'ptr', format, 'uint')
+
+	static GdipAlloc(size) => DllCall('Gdiplus\GdipAlloc', 'uptr', size, 'ptr')
+
+	static GdipBeginContainer(graphics, dstrect, srcrect, unit, state) => DllCall('Gdiplus\GdipBeginContainer', 'ptr', graphics, 'ptr', dstrect, 'ptr', srcrect, 'uint', unit, 'ptr', state, 'uint')
+
+	static GdipBeginContainer2(graphics, state) => DllCall('Gdiplus\GdipBeginContainer2', 'ptr', graphics, 'ptr', state, 'uint')
+
+	static GdipBeginContainerI(graphics, dstrect, srcrect, unit, state) => DllCall('Gdiplus\GdipBeginContainerI', 'ptr', graphics, 'ptr', dstrect, 'ptr', srcrect, 'uint', unit, 'ptr', state, 'uint')
+
+	static GdipBitmapGetPixel(bitmap, x, y, color) => DllCall('Gdiplus\GdipBitmapGetPixel', 'ptr', bitmap, 'int', x, 'int', y, 'ptr', color, 'uint')
+
+	static GdipBitmapLockBits(bitmap, rect, flags, format, lockedBitmapData) => DllCall('Gdiplus\GdipBitmapLockBits', 'ptr', bitmap, 'ptr', rect, 'uint', flags, 'int', format, 'ptr', lockedBitmapData, 'uint')
+
+	static GdipBitmapSetPixel(bitmap, x, y, color) => DllCall('Gdiplus\GdipBitmapSetPixel', 'ptr', bitmap, 'int', x, 'int', y, 'uint', color, 'uint')
+
+	static GdipBitmapSetResolution(bitmap, xdpi, ydpi) => DllCall('Gdiplus\GdipBitmapSetResolution', 'ptr', bitmap, 'int', xdpi, 'int', ydpi, 'uint')
+
+	static GdipBitmapUnlockBits(bitmap, lockedBitmapData) => DllCall('Gdiplus\GdipBitmapUnlockBits', 'ptr', bitmap, 'ptr', lockedBitmapData, 'uint')
+
+	static GdipClearPathMarkers(path) => DllCall('Gdiplus\GdipClearPathMarkers', 'ptr', path, 'uint')
+
+	static GdipCloneBitmapArea(x, y, width, height, format, srcBitmap, dstBitmap) => DllCall('Gdiplus\GdipCloneBitmapArea', 'int', x, 'int', y, 'int', width, 'int', height, 'int', format, 'ptr', srcBitmap, 'ptr', dstBitmap, 'uint')
+
+	static GdipCloneBitmapAreaI(x, y, width, height, format, srcBitmap, dstBitmap) => DllCall('Gdiplus\GdipCloneBitmapAreaI', 'int', x, 'int', y, 'int', width, 'int', height, 'int', format, 'ptr', srcBitmap, 'ptr', dstBitmap, 'uint')
+
+	static GdipCloneBrush(brush, cloneBrush) => DllCall('Gdiplus\GdipCloneBrush', 'ptr', brush, 'ptr', cloneBrush, 'uint')
+
+	static GdipCloneCustomLineCap(customCap, clonedCap) => DllCall('Gdiplus\GdipCloneCustomLineCap', 'ptr', customCap, 'ptr', clonedCap, 'uint')
+
+	static GdipCloneFont(font, cloneFont) => DllCall('Gdiplus\GdipCloneFont', 'ptr', font, 'ptr', cloneFont, 'uint')
+
+	static GdipCloneFontFamily(FontFamily, clonedFontFamily) => DllCall('Gdiplus\GdipCloneFontFamily', 'ptr', FontFamily, 'ptr', clonedFontFamily, 'uint')
+
+	static GdipCloneImage(image, cloneImage) => DllCall('Gdiplus\GdipCloneImage', 'ptr', image, 'ptr', cloneImage, 'uint')
+
+	static GdipCloneImageAttributes(imageattr, cloneImageattr) => DllCall('Gdiplus\GdipCloneImageAttributes', 'ptr', imageattr, 'ptr', cloneImageattr, 'uint')
+
+	static GdipCloneMatrix(matrix, cloneMatrix) => DllCall('Gdiplus\GdipCloneMatrix', 'ptr', matrix, 'ptr', cloneMatrix, 'uint')
+
+	static GdipClonePath(path, clonePath) => DllCall('Gdiplus\GdipClonePath', 'ptr', path, 'ptr', clonePath, 'uint')
+
+	static GdipClonePen(pen, clonepen) => DllCall('Gdiplus\GdipClonePen', 'ptr', pen, 'ptr', clonepen, 'uint')
+
+	static GdipCloneRegion(region, cloneRegion) => DllCall('Gdiplus\GdipCloneRegion', 'ptr', region, 'ptr', cloneRegion, 'uint')
+
+	static GdipCloneStringFormat(format, newFormat) => DllCall('Gdiplus\GdipCloneStringFormat', 'ptr', format, 'ptr', newFormat, 'uint')
+
+	static GdipClosePathFigure(path) => DllCall('Gdiplus\GdipClosePathFigure', 'ptr', path, 'uint')
+
+	static GdipClosePathFigures(path) => DllCall('Gdiplus\GdipClosePathFigures', 'ptr', path, 'uint')
+
+	static GdipCombineRegionPath(region, path, combineMode) => DllCall('Gdiplus\GdipCombineRegionPath', 'ptr', region, 'ptr', path, 'ptr', combineMode, 'uint')
+
+	static GdipCombineRegionRect(region, rect, combineMode) => DllCall('Gdiplus\GdipCombineRegionRect', 'ptr', region, 'ptr', rect, 'ptr', combineMode, 'uint')
+
+	static GdipCombineRegionRectI(region, rect, combineMode) => DllCall('Gdiplus\GdipCombineRegionRectI', 'ptr', region, 'ptr', rect, 'ptr', combineMode, 'uint')
+
+	static GdipCombineRegionRegion(region, region2, combineMode) => DllCall('Gdiplus\GdipCombineRegionRegion', 'ptr', region, 'ptr', region2, 'ptr', combineMode, 'uint')
+
+	static GdipComment(graphics, sizeData, data) => DllCall('Gdiplus\GdipComment', 'ptr', graphics, 'uint', sizeData, 'ptr', data, 'uint')
+
+	static GdipCreateAdjustableArrowCap(height, width, isFilled, cap) => DllCall('Gdiplus\GdipCreateAdjustableArrowCap', 'int', height, 'int', width, 'int', isFilled, 'ptr', cap, 'uint')
+
+	static GdipCreateBitmapFromDirectDrawSurface(surface, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromDirectDrawSurface', 'ptr', surface, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromFile(filename, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromFile', 'ptr', filename, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromFileICM(filename, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromFileICM', 'ptr', filename, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromGdiDib(gdiBitmapInfo, gdiBitmapData, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromGdiDib', 'ptr', gdiBitmapInfo, 'ptr', gdiBitmapData, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromGraphics(width, height, target, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromGraphics', 'int', width, 'int', height, 'ptr', target, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromHBITMAP(hbm, hpal, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromHBITMAP', 'ptr', hbm, 'ptr', hpal, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromHICON(hicon, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromHICON', 'ptr', hicon, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromResource(hInstance, lpBitmapName, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromResource', 'ptr', hInstance, 'ptr', lpBitmapName, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromScan0(width, height, stride, format, &scan0, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromScan0', 'int', width, 'int', height, 'int', stride, 'int', format, 'uchar*', &scan0, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromStream(stream, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromStream', 'ptr', stream, 'ptr', bitmap, 'uint')
+
+	static GdipCreateBitmapFromStreamICM(stream, bitmap) => DllCall('Gdiplus\GdipCreateBitmapFromStreamICM', 'ptr', stream, 'ptr', bitmap, 'uint')
+
+	static GdipCreateCachedBitmap(bitmap, graphics, cachedBitmap) => DllCall('Gdiplus\GdipCreateCachedBitmap', 'ptr', bitmap, 'ptr', graphics, 'ptr', cachedBitmap, 'uint')
+
+	static GdipCreateCustomLineCap(fillPath, strokePath, baseCap, baseInset, customCap) => DllCall('Gdiplus\GdipCreateCustomLineCap', 'ptr', fillPath, 'ptr', strokePath, 'uint', baseCap, 'int', baseInset, 'ptr', customCap, 'uint')
+
+	static GdipCreateFont(fontFamily, emSize, style, unit, font) => DllCall('Gdiplus\GdipCreateFont', 'ptr', fontFamily, 'int', emSize, 'int', style, 'uint', unit, 'ptr', font, 'uint')
+
+	static GdipCreateFontFamilyFromName(name, fontCollection, FontFamily) => DllCall('Gdiplus\GdipCreateFontFamilyFromName', 'ptr', name, 'ptr', fontCollection, 'ptr', FontFamily, 'uint')
+
+	static GdipCreateFontFromDC(hdc, font) => DllCall('Gdiplus\GdipCreateFontFromDC', 'ptr', hdc, 'ptr', font, 'uint')
+
+	static GdipCreateFontFromLogfont(hdc, logfont, font) => DllCall('Gdiplus\GdipCreateFontFromLogfont', 'ptr', hdc, 'ptr', logfont, 'ptr', font, 'uint')
+
+	static GdipCreateFromHDC(hdc, graphics) => DllCall('Gdiplus\GdipCreateFromHDC', 'ptr', hdc, 'ptr', graphics, 'uint')
+
+	static GdipCreateFromHDC2(hdc, hDevice, graphics) => DllCall('Gdiplus\GdipCreateFromHDC2', 'ptr', hdc, 'ptr', hDevice, 'ptr', graphics, 'uint')
+
+	static GdipCreateFromHWND(hwnd, graphics) => DllCall('Gdiplus\GdipCreateFromHWND', 'ptr', hwnd, 'ptr', graphics, 'uint')
+
+	static GdipCreateFromHWNDICM(hwnd, graphics) => DllCall('Gdiplus\GdipCreateFromHWNDICM', 'ptr', hwnd, 'ptr', graphics, 'uint')
+
+	static GdipCreateHBITMAPFromBitmap(bitmap, hbmReturn, background) => DllCall('Gdiplus\GdipCreateHBITMAPFromBitmap', 'ptr', bitmap, 'ptr', hbmReturn, 'uint', background, 'uint')
+
+	static GdipCreateHICONFromBitmap(bitmap, hbmReturn) => DllCall('Gdiplus\GdipCreateHICONFromBitmap', 'ptr', bitmap, 'ptr', hbmReturn, 'uint')
+
+	static GdipCreateHalftonePalette() => DllCall('Gdiplus\GdipCreateHalftonePalette', 'ptr')
+
+	static GdipCreateHatchBrush(hatchstyle, forecol, backcol, brush) => DllCall('Gdiplus\GdipCreateHatchBrush', 'uint', hatchstyle, 'uint', forecol, 'uint', backcol, 'ptr', brush, 'uint')
+
+	static GdipCreateImageAttributes(imageattr) => DllCall('Gdiplus\GdipCreateImageAttributes', 'ptr', imageattr, 'uint')
+
+	static GdipCreateLineBrush(point1, point2, color1, color2, wrapMode, lineGradient) => DllCall('Gdiplus\GdipCreateLineBrush', 'ptr', point1, 'ptr', point2, 'uint', color1, 'uint', color2, 'uint', wrapMode, 'ptr', lineGradient, 'uint')
+
+	static GdipCreateLineBrushFromRect(rect, color1, color2, mode, wrapMode, lineGradient) => DllCall('Gdiplus\GdipCreateLineBrushFromRect', 'ptr', rect, 'uint', color1, 'uint', color2, 'int', mode, 'uint', wrapMode, 'ptr', lineGradient, 'uint')
+
+	static GdipCreateLineBrushFromRectI(rect, color1, color2, mode, wrapMode, lineGradient) => DllCall('Gdiplus\GdipCreateLineBrushFromRectI', 'ptr', rect, 'uint', color1, 'uint', color2, 'int', mode, 'uint', wrapMode, 'ptr', lineGradient, 'uint')
+
+	static GdipCreateLineBrushFromRectWithAngle(rect, color1, color2, angle, isAngleScalable, wrapMode, lineGradient) => DllCall('Gdiplus\GdipCreateLineBrushFromRectWithAngle', 'ptr', rect, 'uint', color1, 'uint', color2, 'int', angle, 'int', isAngleScalable, 'uint', wrapMode, 'ptr', lineGradient, 'uint')
+
+	static GdipCreateLineBrushFromRectWithAngleI(rect, color1, color2, angle, isAngleScalable, wrapMode, lineGradient) => DllCall('Gdiplus\GdipCreateLineBrushFromRectWithAngleI', 'ptr', rect, 'uint', color1, 'uint', color2, 'int', angle, 'int', isAngleScalable, 'uint', wrapMode, 'ptr', lineGradient, 'uint')
+
+	static GdipCreateLineBrushI(point1, point2, color1, color2, wrapMode, lineGradient) => DllCall('Gdiplus\GdipCreateLineBrushI', 'ptr', point1, 'ptr', point2, 'uint', color1, 'uint', color2, 'uint', wrapMode, 'ptr', lineGradient, 'uint')
+
+	static GdipCreateMatrix(matrix) => DllCall('Gdiplus\GdipCreateMatrix', 'ptr', matrix, 'uint')
+
+	static GdipCreateMatrix2(m11, m12, m21, m22, dx, dy, matrix) => DllCall('Gdiplus\GdipCreateMatrix2', 'int', m11, 'int', m12, 'int', m21, 'int', m22, 'int', dx, 'int', dy, 'ptr', matrix, 'uint')
+
+	static GdipCreateMatrix3(rect, dstplg, matrix) => DllCall('Gdiplus\GdipCreateMatrix3', 'ptr', rect, 'ptr', dstplg, 'ptr', matrix, 'uint')
+
+	static GdipCreateMatrix3I(rect, dstplg, matrix) => DllCall('Gdiplus\GdipCreateMatrix3I', 'ptr', rect, 'ptr', dstplg, 'ptr', matrix, 'uint')
+
+	static GdipCreateMetafileFromEmf(hEmf, deleteEmf, metafile) => DllCall('Gdiplus\GdipCreateMetafileFromEmf', 'ptr', hEmf, 'int', deleteEmf, 'ptr', metafile, 'uint')
+
+	static GdipCreateMetafileFromFile(file, metafile) => DllCall('Gdiplus\GdipCreateMetafileFromFile', 'ptr', file, 'ptr', metafile, 'uint')
+
+	static GdipCreateMetafileFromStream(stream, metafile) => DllCall('Gdiplus\GdipCreateMetafileFromStream', 'ptr', stream, 'ptr', metafile, 'uint')
+
+	static GdipCreateMetafileFromWmf(hWmf, deleteWmf, wmfPlaceableFileHeader, metafile) => DllCall('Gdiplus\GdipCreateMetafileFromWmf', 'ptr', hWmf, 'int', deleteWmf, 'ptr', wmfPlaceableFileHeader, 'ptr', metafile, 'uint')
+
+	static GdipCreateMetafileFromWmfFile(file, wmfPlaceableFileHeader, metafile) => DllCall('Gdiplus\GdipCreateMetafileFromWmfFile', 'ptr', file, 'ptr', wmfPlaceableFileHeader, 'ptr', metafile, 'uint')
+
+	static GdipCreatePath(brushMode, path) => DllCall('Gdiplus\GdipCreatePath', 'uint', brushMode, 'ptr', path, 'uint')
+
+	static GdipCreatePath2(points, types, count, fillMode, path) => DllCall('Gdiplus\GdipCreatePath2', 'ptr', points, 'ptr', types, 'int', count, 'uint', fillMode, 'ptr', path, 'uint')
+
+	static GdipCreatePath2I(points, types, count, fillMode, path) => DllCall('Gdiplus\GdipCreatePath2I', 'ptr', points, 'ptr', types, 'int', count, 'uint', fillMode, 'ptr', path, 'uint')
+
+	static GdipCreatePathGradient(points, count, wrapMode, polyGradient) => DllCall('Gdiplus\GdipCreatePathGradient', 'ptr', points, 'int', count, 'uint', wrapMode, 'ptr', polyGradient, 'uint')
+
+	static GdipCreatePathGradientFromPath(path, polyGradient) => DllCall('Gdiplus\GdipCreatePathGradientFromPath', 'ptr', path, 'ptr', polyGradient, 'uint')
+
+	static GdipCreatePathGradientI(points, count, wrapMode, polyGradient) => DllCall('Gdiplus\GdipCreatePathGradientI', 'ptr', points, 'int', count, 'uint', wrapMode, 'ptr', polyGradient, 'uint')
+
+	static GdipCreatePathIter(iterator, path) => DllCall('Gdiplus\GdipCreatePathIter', 'ptr', iterator, 'ptr', path, 'uint')
+
+	static GdipCreatePen1(color, width, unit, pen) => DllCall('Gdiplus\GdipCreatePen1', 'uint', color, 'int', width, 'uint', unit, 'ptr', pen, 'uint')
+
+	static GdipCreatePen2(brush, width, unit, pen) => DllCall('Gdiplus\GdipCreatePen2', 'ptr', brush, 'int', width, 'uint', unit, 'ptr', pen, 'uint')
+
+	static GdipCreateRegion(region) => DllCall('Gdiplus\GdipCreateRegion', 'ptr', region, 'uint')
+
+	static GdipCreateRegionHrgn(hRgn, region) => DllCall('Gdiplus\GdipCreateRegionHrgn', 'ptr', hRgn, 'ptr', region, 'uint')
+
+	static GdipCreateRegionPath(path, region) => DllCall('Gdiplus\GdipCreateRegionPath', 'ptr', path, 'ptr', region, 'uint')
+
+	static GdipCreateRegionRect(rect, region) => DllCall('Gdiplus\GdipCreateRegionRect', 'ptr', rect, 'ptr', region, 'uint')
+
+	static GdipCreateRegionRectI(rect, region) => DllCall('Gdiplus\GdipCreateRegionRectI', 'ptr', rect, 'ptr', region, 'uint')
+
+	static GdipCreateRegionRgnData(regionData, size, region) => DllCall('Gdiplus\GdipCreateRegionRgnData', 'ptr', regionData, 'int', size, 'ptr', region, 'uint')
+
+	static GdipCreateSolidFill(color, brush) => DllCall('Gdiplus\GdipCreateSolidFill', 'uint', color, 'ptr', brush, 'uint')
+
+	static GdipCreateStreamOnFile(filename, access, stream) => DllCall('Gdiplus\GdipCreateStreamOnFile', 'ptr', filename, 'uint', access, 'ptr', stream, 'uint')
+
+	static GdipCreateStringFormat(formatAttributes, language, format) => DllCall('Gdiplus\GdipCreateStringFormat', 'int', formatAttributes, 'ushort', language, 'ptr', format, 'uint')
+
+	static GdipCreateTexture(image, wrapmode, texture) => DllCall('Gdiplus\GdipCreateTexture', 'ptr', image, 'uint', wrapmode, 'ptr', texture, 'uint')
+
+	static GdipCreateTexture2(image, wrapmode, x, y, width, height, texture) => DllCall('Gdiplus\GdipCreateTexture2', 'ptr', image, 'uint', wrapmode, 'int', x, 'int', y, 'int', width, 'int', height, 'ptr', texture, 'uint')
+
+	static GdipCreateTexture2I(image, wrapmode, x, y, width, height, texture) => DllCall('Gdiplus\GdipCreateTexture2I', 'ptr', image, 'uint', wrapmode, 'int', x, 'int', y, 'int', width, 'int', height, 'ptr', texture, 'uint')
+
+	static GdipCreateTextureIA(image, imageAttributes, x, y, width, height, texture) => DllCall('Gdiplus\GdipCreateTextureIA', 'ptr', image, 'ptr', imageAttributes, 'int', x, 'int', y, 'int', width, 'int', height, 'ptr', texture, 'uint')
+
+	static GdipCreateTextureIAI(image, imageAttributes, x, y, width, height, texture) => DllCall('Gdiplus\GdipCreateTextureIAI', 'ptr', image, 'ptr', imageAttributes, 'int', x, 'int', y, 'int', width, 'int', height, 'ptr', texture, 'uint')
+
+	static GdipDeleteBrush(brush) => DllCall('Gdiplus\GdipDeleteBrush', 'ptr', brush, 'uint')
+
+	static GdipDeleteCachedBitmap(cachedBitmap) => DllCall('Gdiplus\GdipDeleteCachedBitmap', 'ptr', cachedBitmap, 'uint')
+
+	static GdipDeleteCustomLineCap(customCap) => DllCall('Gdiplus\GdipDeleteCustomLineCap', 'ptr', customCap, 'uint')
+
+	static GdipDeleteFont(font) => DllCall('Gdiplus\GdipDeleteFont', 'ptr', font, 'uint')
+
+	static GdipDeleteFontFamily(FontFamily) => DllCall('Gdiplus\GdipDeleteFontFamily', 'ptr', FontFamily, 'uint')
+
+	static GdipDeleteGraphics(graphics) => DllCall('Gdiplus\GdipDeleteGraphics', 'ptr', graphics, 'uint')
+
+	static GdipDeleteMatrix(matrix) => DllCall('Gdiplus\GdipDeleteMatrix', 'ptr', matrix, 'uint')
+
+	static GdipDeletePath(path) => DllCall('Gdiplus\GdipDeletePath', 'ptr', path, 'uint')
+
+	static GdipDeletePathIter(iterator) => DllCall('Gdiplus\GdipDeletePathIter', 'ptr', iterator, 'uint')
+
+	static GdipDeletePen(pen) => DllCall('Gdiplus\GdipDeletePen', 'ptr', pen, 'uint')
+
+	static GdipDeletePrivateFontCollection(fontCollection) => DllCall('Gdiplus\GdipDeletePrivateFontCollection', 'ptr', fontCollection, 'uint')
+
+	static GdipDeleteRegion(region) => DllCall('Gdiplus\GdipDeleteRegion', 'ptr', region, 'uint')
+
+	static GdipDeleteStringFormat(format) => DllCall('Gdiplus\GdipDeleteStringFormat', 'ptr', format, 'uint')
+
+	static GdipDisposeImage(image) => DllCall('Gdiplus\GdipDisposeImage', 'ptr', image, 'uint')
+
+	static GdipDisposeImageAttributes(imageattr) => DllCall('Gdiplus\GdipDisposeImageAttributes', 'ptr', imageattr, 'uint')
+
+	static GdipDrawArc(graphics, pen, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipDrawArc', 'ptr', graphics, 'ptr', pen, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipDrawArcI(graphics, pen, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipDrawArcI', 'ptr', graphics, 'ptr', pen, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipDrawBezier(graphics, pen, x1, y1, x2, y2, x3, y3, x4, y4) => DllCall('Gdiplus\GdipDrawBezier', 'ptr', graphics, 'ptr', pen, 'int', x1, 'int', y1, 'int', x2, 'int', y2, 'int', x3, 'int', y3, 'int', x4, 'int', y4, 'uint')
+
+	static GdipDrawBezierI(graphics, pen, x1, y1, x2, y2, x3, y3, x4, y4) => DllCall('Gdiplus\GdipDrawBezierI', 'ptr', graphics, 'ptr', pen, 'int', x1, 'int', y1, 'int', x2, 'int', y2, 'int', x3, 'int', y3, 'int', x4, 'int', y4, 'uint')
+
+	static GdipDrawBeziers(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawBeziers', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawBeziersI(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawBeziersI', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawCachedBitmap(graphics, cachedBitmap, x, y) => DllCall('Gdiplus\GdipDrawCachedBitmap', 'ptr', graphics, 'ptr', cachedBitmap, 'int', x, 'int', y, 'uint')
+
+	static GdipDrawClosedCurve(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawClosedCurve', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawClosedCurve2(graphics, pen, points, count, tension) => DllCall('Gdiplus\GdipDrawClosedCurve2', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'int', tension, 'uint')
+
+	static GdipDrawClosedCurve2I(graphics, pen, points, count, tension) => DllCall('Gdiplus\GdipDrawClosedCurve2I', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'int', tension, 'uint')
+
+	static GdipDrawClosedCurveI(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawClosedCurveI', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawCurve(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawCurve', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawCurve2(graphics, pen, points, count, tension) => DllCall('Gdiplus\GdipDrawCurve2', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'int', tension, 'uint')
+
+	static GdipDrawCurve2I(graphics, pen, points, count, tension) => DllCall('Gdiplus\GdipDrawCurve2I', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'int', tension, 'uint')
+
+	static GdipDrawCurve3(graphics, pen, points, count, offset, numberOfSegments, tension) => DllCall('Gdiplus\GdipDrawCurve3', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'int', offset, 'int', numberOfSegments, 'int', tension, 'uint')
+
+	static GdipDrawCurve3I(graphics, pen, points, count, offset, numberOfSegments, tension) => DllCall('Gdiplus\GdipDrawCurve3I', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'int', offset, 'int', numberOfSegments, 'int', tension, 'uint')
+
+	static GdipDrawCurveI(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawCurveI', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawDriverString(graphics, text, length, font, brush, positions, flags, matrix) => DllCall('Gdiplus\GdipDrawDriverString', 'ptr', graphics, 'ptr', text, 'int', length, 'ptr', font, 'ptr', brush, 'ptr', positions, 'int', flags, 'ptr', matrix, 'uint')
+
+	static GdipDrawEllipse(graphics, pen, x, y, width, height) => DllCall('Gdiplus\GdipDrawEllipse', 'ptr', graphics, 'ptr', pen, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipDrawEllipseI(graphics, pen, x, y, width, height) => DllCall('Gdiplus\GdipDrawEllipseI', 'ptr', graphics, 'ptr', pen, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipDrawImage(graphics, image, x, y) => DllCall('Gdiplus\GdipDrawImage', 'ptr', graphics, 'ptr', image, 'int', x, 'int', y, 'uint')
+
+	static GdipDrawImageI(graphics, image, x, y) => DllCall('Gdiplus\GdipDrawImageI', 'ptr', graphics, 'ptr', image, 'int', x, 'int', y, 'uint')
+
+	static GdipDrawImagePointRect(graphics, image, x, y, srcx, srcy, srcwidth, srcheight, srcUnit) => DllCall('Gdiplus\GdipDrawImagePointRect', 'ptr', graphics, 'ptr', image, 'int', x, 'int', y, 'int', srcx, 'int', srcy, 'int', srcwidth, 'int', srcheight, 'uint', srcUnit, 'uint')
+
+	static GdipDrawImagePointRectI(graphics, image, x, y, srcx, srcy, srcwidth, srcheight, srcUnit) => DllCall('Gdiplus\GdipDrawImagePointRectI', 'ptr', graphics, 'ptr', image, 'int', x, 'int', y, 'int', srcx, 'int', srcy, 'int', srcwidth, 'int', srcheight, 'uint', srcUnit, 'uint')
+
+	static GdipDrawImagePoints(graphics, image, dstpoints, count) => DllCall('Gdiplus\GdipDrawImagePoints', 'ptr', graphics, 'ptr', image, 'ptr', dstpoints, 'int', count, 'uint')
+
+	static GdipDrawImagePointsI(graphics, image, dstpoints, count) => DllCall('Gdiplus\GdipDrawImagePointsI', 'ptr', graphics, 'ptr', image, 'ptr', dstpoints, 'int', count, 'uint')
+
+	static GdipDrawImagePointsRect(graphics, image, points, count, srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback, callbackData) => DllCall('Gdiplus\GdipDrawImagePointsRect', 'ptr', graphics, 'ptr', image, 'ptr', points, 'int', count, 'int', srcx, 'int', srcy, 'int', srcwidth, 'int', srcheight, 'uint', srcUnit, 'ptr', imageAttributes, 'uint', callback, 'ptr', callbackData, 'uint')
+
+	static GdipDrawImagePointsRectI(graphics, image, points, count, srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback, callbackData) => DllCall('Gdiplus\GdipDrawImagePointsRectI', 'ptr', graphics, 'ptr', image, 'ptr', points, 'int', count, 'int', srcx, 'int', srcy, 'int', srcwidth, 'int', srcheight, 'uint', srcUnit, 'ptr', imageAttributes, 'uint', callback, 'ptr', callbackData, 'uint')
+
+	static GdipDrawImageRect(graphics, image, x, y, width, height) => DllCall('Gdiplus\GdipDrawImageRect', 'ptr', graphics, 'ptr', image, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipDrawImageRectI(graphics, image, x, y, width, height) => DllCall('Gdiplus\GdipDrawImageRectI', 'ptr', graphics, 'ptr', image, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipDrawImageRectRect(graphics, image, dstx, dsty, dstwidth, dstheight, srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback, callbackData) => DllCall('Gdiplus\GdipDrawImageRectRect', 'ptr', graphics, 'ptr', image, 'int', dstx, 'int', dsty, 'int', dstwidth, 'int', dstheight, 'int', srcx, 'int', srcy, 'int', srcwidth, 'int', srcheight, 'uint', srcUnit, 'ptr', imageAttributes, 'uint', callback, 'ptr', callbackData, 'uint')
+
+	static GdipDrawImageRectRectI(graphics, image, dstx, dsty, dstwidth, dstheight, srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback, callbackData) => DllCall('Gdiplus\GdipDrawImageRectRectI', 'ptr', graphics, 'ptr', image, 'int', dstx, 'int', dsty, 'int', dstwidth, 'int', dstheight, 'int', srcx, 'int', srcy, 'int', srcwidth, 'int', srcheight, 'uint', srcUnit, 'ptr', imageAttributes, 'uint', callback, 'ptr', callbackData, 'uint')
+
+	static GdipDrawLine(graphics, pen, x1, y1, x2, y2) => DllCall('Gdiplus\GdipDrawLine', 'ptr', graphics, 'ptr', pen, 'int', x1, 'int', y1, 'int', x2, 'int', y2, 'uint')
+
+	static GdipDrawLineI(graphics, pen, x1, y1, x2, y2) => DllCall('Gdiplus\GdipDrawLineI', 'ptr', graphics, 'ptr', pen, 'int', x1, 'int', y1, 'int', x2, 'int', y2, 'uint')
+
+	static GdipDrawLines(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawLines', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawLinesI(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawLinesI', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawPath(graphics, pen, path) => DllCall('Gdiplus\GdipDrawPath', 'ptr', graphics, 'ptr', pen, 'ptr', path, 'uint')
+
+	static GdipDrawPie(graphics, pen, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipDrawPie', 'ptr', graphics, 'ptr', pen, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipDrawPieI(graphics, pen, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipDrawPieI', 'ptr', graphics, 'ptr', pen, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipDrawPolygon(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawPolygon', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawPolygonI(graphics, pen, points, count) => DllCall('Gdiplus\GdipDrawPolygonI', 'ptr', graphics, 'ptr', pen, 'ptr', points, 'int', count, 'uint')
+
+	static GdipDrawRectangle(graphics, pen, x, y, width, height) => DllCall('Gdiplus\GdipDrawRectangle', 'ptr', graphics, 'ptr', pen, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipDrawRectangleI(graphics, pen, x, y, width, height) => DllCall('Gdiplus\GdipDrawRectangleI', 'ptr', graphics, 'ptr', pen, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipDrawRectangles(graphics, pen, rects, count) => DllCall('Gdiplus\GdipDrawRectangles', 'ptr', graphics, 'ptr', pen, 'ptr', rects, 'int', count, 'uint')
+
+	static GdipDrawRectanglesI(graphics, pen, rects, count) => DllCall('Gdiplus\GdipDrawRectanglesI', 'ptr', graphics, 'ptr', pen, 'ptr', rects, 'int', count, 'uint')
+
+	static GdipDrawString(graphics, string, length, font, layoutRect, stringFormat, brush) => DllCall('Gdiplus\GdipDrawString', 'ptr', graphics, 'ptr', string, 'int', length, 'ptr', font, 'ptr', layoutRect, 'ptr', stringFormat, 'ptr', brush, 'uint')
+
+	static GdipEmfToWmfBits(hemf, cbData16, pData16, iMapMode, eFlags) => DllCall('Gdiplus\GdipEmfToWmfBits', 'ptr', hemf, 'uint', cbData16, 'ptr', pData16, 'int', iMapMode, 'int', eFlags, 'uint')
+
+	static GdipEndContainer(graphics, state) => DllCall('Gdiplus\GdipEndContainer', 'ptr', graphics, 'uint', state, 'uint')
+
+	static GdipEnumerateMetafileDestPoint(graphics, metafile, destPoint, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileDestPoint', 'ptr', graphics, 'ptr', metafile, 'ptr', destPoint, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileDestPointI(graphics, metafile, destPoint, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileDestPointI', 'ptr', graphics, 'ptr', metafile, 'ptr', destPoint, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileDestPoints(graphics, metafile, destPoints, count, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileDestPoints', 'ptr', graphics, 'ptr', metafile, 'ptr', destPoints, 'int', count, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileDestPointsI(graphics, metafile, destPoints, count, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileDestPointsI', 'ptr', graphics, 'ptr', metafile, 'ptr', destPoints, 'int', count, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileDestRect(graphics, metafile, destRect, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileDestRect', 'ptr', graphics, 'ptr', metafile, 'ptr', destRect, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileDestRectI(graphics, metafile, destRect, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileDestRectI', 'ptr', graphics, 'ptr', metafile, 'ptr', destRect, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileSrcRectDestPoint(graphics, metafile, destPoint, srcRect, srcUnit, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileSrcRectDestPoint', 'ptr', graphics, 'ptr', metafile, 'ptr', destPoint, 'ptr', srcRect, 'uint', srcUnit, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileSrcRectDestPointI(graphics, metafile, destPoint, srcRect, srcUnit, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileSrcRectDestPointI', 'ptr', graphics, 'ptr', metafile, 'ptr', destPoint, 'ptr', srcRect, 'uint', srcUnit, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileSrcRectDestPoints(graphics, metafile, destPoints, count, srcRect, srcUnit, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileSrcRectDestPoints', 'ptr', graphics, 'ptr', metafile, 'ptr', destPoints, 'int', count, 'ptr', srcRect, 'uint', srcUnit, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileSrcRectDestPointsI(graphics, metafile, destPoints, count, srcRect, srcUnit, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileSrcRectDestPointsI', 'ptr', graphics, 'ptr', metafile, 'ptr', destPoints, 'int', count, 'ptr', srcRect, 'uint', srcUnit, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileSrcRectDestRect(graphics, metafile, destRect, srcRect, srcUnit, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileSrcRectDestRect', 'ptr', graphics, 'ptr', metafile, 'ptr', destRect, 'ptr', srcRect, 'uint', srcUnit, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipEnumerateMetafileSrcRectDestRectI(graphics, metafile, destRect, srcRect, srcUnit, callback, callbackData, imageAttributes) => DllCall('Gdiplus\GdipEnumerateMetafileSrcRectDestRectI', 'ptr', graphics, 'ptr', metafile, 'ptr', destRect, 'ptr', srcRect, 'uint', srcUnit, 'ptr', callback, 'ptr', callbackData, 'ptr', imageAttributes, 'uint')
+
+	static GdipFillClosedCurve(graphics, brush, points, count) => DllCall('Gdiplus\GdipFillClosedCurve', 'ptr', graphics, 'ptr', brush, 'ptr', points, 'int', count, 'uint')
+
+	static GdipFillClosedCurve2(graphics, brush, points, count, tension, fillMode) => DllCall('Gdiplus\GdipFillClosedCurve2', 'ptr', graphics, 'ptr', brush, 'ptr', points, 'int', count, 'int', tension, 'uint', fillMode, 'uint')
+
+	static GdipFillClosedCurve2I(graphics, brush, points, count, tension, fillMode) => DllCall('Gdiplus\GdipFillClosedCurve2I', 'ptr', graphics, 'ptr', brush, 'ptr', points, 'int', count, 'int', tension, 'uint', fillMode, 'uint')
+
+	static GdipFillClosedCurveI(graphics, brush, points, count) => DllCall('Gdiplus\GdipFillClosedCurveI', 'ptr', graphics, 'ptr', brush, 'ptr', points, 'int', count, 'uint')
+
+	static GdipFillEllipse(graphics, brush, x, y, width, height) => DllCall('Gdiplus\GdipFillEllipse', 'ptr', graphics, 'ptr', brush, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipFillEllipseI(graphics, brush, x, y, width, height) => DllCall('Gdiplus\GdipFillEllipseI', 'ptr', graphics, 'ptr', brush, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipFillPath(graphics, brush, path) => DllCall('Gdiplus\GdipFillPath', 'ptr', graphics, 'ptr', brush, 'ptr', path, 'uint')
+
+	static GdipFillPie(graphics, brush, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipFillPie', 'ptr', graphics, 'ptr', brush, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipFillPieI(graphics, brush, x, y, width, height, startAngle, sweepAngle) => DllCall('Gdiplus\GdipFillPieI', 'ptr', graphics, 'ptr', brush, 'int', x, 'int', y, 'int', width, 'int', height, 'int', startAngle, 'int', sweepAngle, 'uint')
+
+	static GdipFillPolygon(graphics, brush, points, count, fillMode) => DllCall('Gdiplus\GdipFillPolygon', 'ptr', graphics, 'ptr', brush, 'ptr', points, 'int', count, 'uint', fillMode, 'uint')
+
+	static GdipFillPolygon2(graphics, brush, points, count) => DllCall('Gdiplus\GdipFillPolygon2', 'ptr', graphics, 'ptr', brush, 'ptr', points, 'int', count, 'uint')
+
+	static GdipFillPolygon2I(graphics, brush, points, count) => DllCall('Gdiplus\GdipFillPolygon2I', 'ptr', graphics, 'ptr', brush, 'ptr', points, 'int', count, 'uint')
+
+	static GdipFillPolygonI(graphics, brush, points, count, fillMode) => DllCall('Gdiplus\GdipFillPolygonI', 'ptr', graphics, 'ptr', brush, 'ptr', points, 'int', count, 'uint', fillMode, 'uint')
+
+	static GdipFillRectangle(graphics, brush, x, y, width, height) => DllCall('Gdiplus\GdipFillRectangle', 'ptr', graphics, 'ptr', brush, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipFillRectangleI(graphics, brush, x, y, width, height) => DllCall('Gdiplus\GdipFillRectangleI', 'ptr', graphics, 'ptr', brush, 'int', x, 'int', y, 'int', width, 'int', height, 'uint')
+
+	static GdipFillRectangles(graphics, brush, rects, count) => DllCall('Gdiplus\GdipFillRectangles', 'ptr', graphics, 'ptr', brush, 'ptr', rects, 'int', count, 'uint')
+
+	static GdipFillRectanglesI(graphics, brush, rects, count) => DllCall('Gdiplus\GdipFillRectanglesI', 'ptr', graphics, 'ptr', brush, 'ptr', rects, 'int', count, 'uint')
+
+	static GdipFillRegion(graphics, brush, region) => DllCall('Gdiplus\GdipFillRegion', 'ptr', graphics, 'ptr', brush, 'ptr', region, 'uint')
+
+	static GdipFlattenPath(path, matrix, flatness) => DllCall('Gdiplus\GdipFlattenPath', 'ptr', path, 'ptr', matrix, 'int', flatness, 'uint')
+
+	static GdipFlush(graphics, intention) => DllCall('Gdiplus\GdipFlush', 'ptr', graphics, 'uint', intention, 'uint')
+
+	static GdipFree(ptr) => DllCall('Gdiplus\GdipFree', 'ptr', ptr, 'int')
+
+	static GdipGetAdjustableArrowCapFillState(cap, &fillState) => DllCall('Gdiplus\GdipGetAdjustableArrowCapFillState', 'ptr', cap, 'int*', &fillState, 'uint')
+
+	static GdipGetAdjustableArrowCapHeight(cap, height) => DllCall('Gdiplus\GdipGetAdjustableArrowCapHeight', 'ptr', cap, 'ptr', height, 'uint')
+
+	static GdipGetAdjustableArrowCapMiddleInset(cap, middleInset) => DllCall('Gdiplus\GdipGetAdjustableArrowCapMiddleInset', 'ptr', cap, 'ptr', middleInset, 'uint')
+
+	static GdipGetAdjustableArrowCapWidth(cap, width) => DllCall('Gdiplus\GdipGetAdjustableArrowCapWidth', 'ptr', cap, 'ptr', width, 'uint')
+
+	static GdipGetAllPropertyItems(image, totalBufferSize, numProperties, allItems) => DllCall('Gdiplus\GdipGetAllPropertyItems', 'ptr', image, 'uint', totalBufferSize, 'uint', numProperties, 'ptr', allItems, 'uint')
+
+	static GdipGetBrushType(brush, type) => DllCall('Gdiplus\GdipGetBrushType', 'ptr', brush, 'ptr', type, 'uint')
+
+	static GdipGetCellAscent(family, style, CellAscent) => DllCall('Gdiplus\GdipGetCellAscent', 'ptr', family, 'int', style, 'ptr', CellAscent, 'uint')
+
+	static GdipGetCellDescent(family, style, CellDescent) => DllCall('Gdiplus\GdipGetCellDescent', 'ptr', family, 'int', style, 'ptr', CellDescent, 'uint')
+
+	static GdipGetClip(graphics, region) => DllCall('Gdiplus\GdipGetClip', 'ptr', graphics, 'ptr', region, 'uint')
+
+	static GdipGetClipBounds(graphics, rect) => DllCall('Gdiplus\GdipGetClipBounds', 'ptr', graphics, 'ptr', rect, 'uint')
+
+	static GdipGetClipBoundsI(graphics, rect) => DllCall('Gdiplus\GdipGetClipBoundsI', 'ptr', graphics, 'ptr', rect, 'uint')
+
+	static GdipGetCompositingMode(graphics, compositingMode) => DllCall('Gdiplus\GdipGetCompositingMode', 'ptr', graphics, 'ptr', compositingMode, 'uint')
+
+	static GdipGetCompositingQuality(graphics, compositingQuality) => DllCall('Gdiplus\GdipGetCompositingQuality', 'ptr', graphics, 'ptr', compositingQuality, 'uint')
+
+	static GdipGetCustomLineCapBaseCap(customCap, baseCap) => DllCall('Gdiplus\GdipGetCustomLineCapBaseCap', 'ptr', customCap, 'ptr', baseCap, 'uint')
+
+	static GdipGetCustomLineCapBaseInset(customCap, inset) => DllCall('Gdiplus\GdipGetCustomLineCapBaseInset', 'ptr', customCap, 'ptr', inset, 'uint')
+
+	static GdipGetCustomLineCapStrokeCaps(customCap, startCap, endCap) => DllCall('Gdiplus\GdipGetCustomLineCapStrokeCaps', 'ptr', customCap, 'ptr', startCap, 'ptr', endCap, 'uint')
+
+	static GdipGetCustomLineCapStrokeJoin(customCap, lineJoin) => DllCall('Gdiplus\GdipGetCustomLineCapStrokeJoin', 'ptr', customCap, 'ptr', lineJoin, 'uint')
+
+	static GdipGetCustomLineCapType(customCap, capType) => DllCall('Gdiplus\GdipGetCustomLineCapType', 'ptr', customCap, 'ptr', capType, 'uint')
+
+	static GdipGetCustomLineCapWidthScale(customCap, widthScale) => DllCall('Gdiplus\GdipGetCustomLineCapWidthScale', 'ptr', customCap, 'ptr', widthScale, 'uint')
+
+	static GdipGetDC(graphics, hdc) => DllCall('Gdiplus\GdipGetDC', 'ptr', graphics, 'ptr', hdc, 'uint')
+
+	static GdipGetDpiX(graphics, dpi) => DllCall('Gdiplus\GdipGetDpiX', 'ptr', graphics, 'ptr', dpi, 'uint')
+
+	static GdipGetDpiY(graphics, dpi) => DllCall('Gdiplus\GdipGetDpiY', 'ptr', graphics, 'ptr', dpi, 'uint')
+
+	static GdipGetEmHeight(family, style, EmHeight) => DllCall('Gdiplus\GdipGetEmHeight', 'ptr', family, 'int', style, 'ptr', EmHeight, 'uint')
+
+	static GdipGetEncoderParameterList(image, clsidEncoder, size, buffer) => DllCall('Gdiplus\GdipGetEncoderParameterList', 'ptr', image, 'ptr', clsidEncoder, 'uint', size, 'ptr', buffer, 'uint')
+
+	static GdipGetEncoderParameterListSize(image, clsidEncoder, &size) => DllCall('Gdiplus\GdipGetEncoderParameterListSize', 'ptr', image, 'ptr', clsidEncoder, 'uint*', &size, 'uint')
+
+	static GdipGetFamily(font, family) => DllCall('Gdiplus\GdipGetFamily', 'ptr', font, 'ptr', family, 'uint')
+
+	static GdipGetFamilyName(family, name, language) => DllCall('Gdiplus\GdipGetFamilyName', 'ptr', family, 'wstr', name, 'ushort', language, 'uint')
+
+	static GdipGetFontCollectionFamilyCount(fontCollection, &numFound) => DllCall('Gdiplus\GdipGetFontCollectionFamilyCount', 'ptr', fontCollection, 'int*', &numFound, 'uint')
+
+	static GdipGetFontCollectionFamilyList(fontCollection, numSought, gpfamilies, &numFound) => DllCall('Gdiplus\GdipGetFontCollectionFamilyList', 'ptr', fontCollection, 'int', numSought, 'ptr', gpfamilies, 'int*', &numFound, 'uint')
+
+	static GdipGetFontHeight(font, graphics, height) => DllCall('Gdiplus\GdipGetFontHeight', 'ptr', font, 'ptr', graphics, 'ptr', height, 'uint')
+
+	static GdipGetFontHeightGivenDPI(font, dpi, height) => DllCall('Gdiplus\GdipGetFontHeightGivenDPI', 'ptr', font, 'int', dpi, 'ptr', height, 'uint')
+
+	static GdipGetFontSize(font, size) => DllCall('Gdiplus\GdipGetFontSize', 'ptr', font, 'ptr', size, 'uint')
+
+	static GdipGetFontStyle(font, &style) => DllCall('Gdiplus\GdipGetFontStyle', 'ptr', font, 'int*', &style, 'uint')
+
+	static GdipGetFontUnit(font, unit) => DllCall('Gdiplus\GdipGetFontUnit', 'ptr', font, 'ptr', unit, 'uint')
+
+	static GdipGetGenericFontFamilyMonospace(nativeFamily) => DllCall('Gdiplus\GdipGetGenericFontFamilyMonospace', 'ptr', nativeFamily, 'uint')
+
+	static GdipGetGenericFontFamilySansSerif(nativeFamily) => DllCall('Gdiplus\GdipGetGenericFontFamilySansSerif', 'ptr', nativeFamily, 'uint')
+
+	static GdipGetGenericFontFamilySerif(nativeFamily) => DllCall('Gdiplus\GdipGetGenericFontFamilySerif', 'ptr', nativeFamily, 'uint')
+
+	static GdipGetHatchBackgroundColor(brush, backcol) => DllCall('Gdiplus\GdipGetHatchBackgroundColor', 'ptr', brush, 'ptr', backcol, 'uint')
+
+	static GdipGetHatchForegroundColor(brush, forecol) => DllCall('Gdiplus\GdipGetHatchForegroundColor', 'ptr', brush, 'ptr', forecol, 'uint')
+
+	static GdipGetHatchStyle(brush, hatchstyle) => DllCall('Gdiplus\GdipGetHatchStyle', 'ptr', brush, 'ptr', hatchstyle, 'uint')
+
+	static GdipGetHemfFromMetafile(metafile, hEmf) => DllCall('Gdiplus\GdipGetHemfFromMetafile', 'ptr', metafile, 'ptr', hEmf, 'uint')
+
+	static GdipGetImageAttributesAdjustedPalette(imageAttr, colorPalette, colorAdjustType) => DllCall('Gdiplus\GdipGetImageAttributesAdjustedPalette', 'ptr', imageAttr, 'ptr', colorPalette, 'ptr', colorAdjustType, 'uint')
+
+	static GdipGetImageBounds(image, srcRect, srcUnit) => DllCall('Gdiplus\GdipGetImageBounds', 'ptr', image, 'ptr', srcRect, 'ptr', srcUnit, 'uint')
+
+	static GdipGetImageDecoders(numDecoders, size, decoders) => DllCall('Gdiplus\GdipGetImageDecoders', 'uint', numDecoders, 'uint', size, 'ptr', decoders, 'uint')
+
+	static GdipGetImageDecodersSize(&numDecoders, &size) => DllCall('Gdiplus\GdipGetImageDecodersSize', 'uint*', &numDecoders, 'uint*', &size, 'uint')
+
+	static GdipGetImageDimension(image, width, height) => DllCall('Gdiplus\GdipGetImageDimension', 'ptr', image, 'ptr', width, 'ptr', height, 'uint')
+
+	static GdipGetImageEncoders(numEncoders, size, encoders) => DllCall('Gdiplus\GdipGetImageEncoders', 'uint', numEncoders, 'uint', size, 'ptr', encoders, 'uint')
+
+	static GdipGetImageEncodersSize(&numEncoders, &size) => DllCall('Gdiplus\GdipGetImageEncodersSize', 'uint*', &numEncoders, 'uint*', &size, 'uint')
+
+	static GdipGetImageFlags(image, &flags) => DllCall('Gdiplus\GdipGetImageFlags', 'ptr', image, 'uint*', &flags, 'uint')
+
+	static GdipGetImageGraphicsContext(image, graphics) => DllCall('Gdiplus\GdipGetImageGraphicsContext', 'ptr', image, 'ptr', graphics, 'uint')
+
+	static GdipGetImageHeight(image, &height) => DllCall('Gdiplus\GdipGetImageHeight', 'ptr', image, 'uint*', &height, 'uint')
+
+	static GdipGetImageHorizontalResolution(image, resolution) => DllCall('Gdiplus\GdipGetImageHorizontalResolution', 'ptr', image, 'ptr', resolution, 'uint')
+
+	static GdipGetImagePalette(image, palette, size) => DllCall('Gdiplus\GdipGetImagePalette', 'ptr', image, 'ptr', palette, 'int', size, 'uint')
+
+	static GdipGetImagePaletteSize(image, &size) => DllCall('Gdiplus\GdipGetImagePaletteSize', 'ptr', image, 'int*', &size, 'uint')
+
+	static GdipGetImagePixelFormat(image, format) => DllCall('Gdiplus\GdipGetImagePixelFormat', 'ptr', image, 'ptr', format, 'uint')
+
+	static GdipGetImageRawFormat(image, format) => DllCall('Gdiplus\GdipGetImageRawFormat', 'ptr', image, 'ptr', format, 'uint')
+
+	static GdipGetImageThumbnail(image, thumbWidth, thumbHeight, thumbImage, callback, callbackData) => DllCall('Gdiplus\GdipGetImageThumbnail', 'ptr', image, 'uint', thumbWidth, 'uint', thumbHeight, 'ptr', thumbImage, 'ptr', callback, 'ptr', callbackData, 'uint')
+
+	static GdipGetImageType(image, type) => DllCall('Gdiplus\GdipGetImageType', 'ptr', image, 'ptr', type, 'uint')
+
+	static GdipGetImageVerticalResolution(image, resolution) => DllCall('Gdiplus\GdipGetImageVerticalResolution', 'ptr', image, 'ptr', resolution, 'uint')
+
+	static GdipGetImageWidth(image, &width) => DllCall('Gdiplus\GdipGetImageWidth', 'ptr', image, 'uint*', &width, 'uint')
+
+	static GdipGetInterpolationMode(graphics, interpolationMode) => DllCall('Gdiplus\GdipGetInterpolationMode', 'ptr', graphics, 'ptr', interpolationMode, 'uint')
+
+	static GdipGetLineBlend(brush, blend, positions, count) => DllCall('Gdiplus\GdipGetLineBlend', 'ptr', brush, 'ptr', blend, 'ptr', positions, 'int', count, 'uint')
+
+	static GdipGetLineBlendCount(brush, &count) => DllCall('Gdiplus\GdipGetLineBlendCount', 'ptr', brush, 'int*', &count, 'uint')
+
+	static GdipGetLineColors(brush, colors) => DllCall('Gdiplus\GdipGetLineColors', 'ptr', brush, 'ptr', colors, 'uint')
+
+	static GdipGetLineGammaCorrection(brush, &useGammaCorrection) => DllCall('Gdiplus\GdipGetLineGammaCorrection', 'ptr', brush, 'int*', &useGammaCorrection, 'uint')
+
+	static GdipGetLinePresetBlend(brush, blend, positions, count) => DllCall('Gdiplus\GdipGetLinePresetBlend', 'ptr', brush, 'ptr', blend, 'ptr', positions, 'int', count, 'uint')
+
+	static GdipGetLinePresetBlendCount(brush, &count) => DllCall('Gdiplus\GdipGetLinePresetBlendCount', 'ptr', brush, 'int*', &count, 'uint')
+
+	static GdipGetLineRect(brush, rect) => DllCall('Gdiplus\GdipGetLineRect', 'ptr', brush, 'ptr', rect, 'uint')
+
+	static GdipGetLineRectI(brush, rect) => DllCall('Gdiplus\GdipGetLineRectI', 'ptr', brush, 'ptr', rect, 'uint')
+
+	static GdipGetLineSpacing(family, style, LineSpacing) => DllCall('Gdiplus\GdipGetLineSpacing', 'ptr', family, 'int', style, 'ptr', LineSpacing, 'uint')
+
+	static GdipGetLineTransform(brush, matrix) => DllCall('Gdiplus\GdipGetLineTransform', 'ptr', brush, 'ptr', matrix, 'uint')
+
+	static GdipGetLineWrapMode(brush, wrapmode) => DllCall('Gdiplus\GdipGetLineWrapMode', 'ptr', brush, 'ptr', wrapmode, 'uint')
+
+	static GdipGetLogFont(font, graphics, logfontA) => DllCall('Gdiplus\GdipGetLogFont', 'ptr', font, 'ptr', graphics, 'ptr', logfontA, 'uint')
+
+	static GdipGetMatrixElements(matrix, matrixOut) => DllCall('Gdiplus\GdipGetMatrixElements', 'ptr', matrix, 'ptr', matrixOut, 'uint')
+
+	static GdipGetMetafileDownLevelRasterizationLimit(metafile, &metafileRasterizationLimitDpi) => DllCall('Gdiplus\GdipGetMetafileDownLevelRasterizationLimit', 'ptr', metafile, 'uint*', &metafileRasterizationLimitDpi, 'uint')
+
+	static GdipGetMetafileHeaderFromEmf(hEmf, header) => DllCall('Gdiplus\GdipGetMetafileHeaderFromEmf', 'ptr', hEmf, 'ptr', header, 'uint')
+
+	static GdipGetMetafileHeaderFromFile(filename, header) => DllCall('Gdiplus\GdipGetMetafileHeaderFromFile', 'ptr', filename, 'ptr', header, 'uint')
+
+	static GdipGetMetafileHeaderFromMetafile(metafile, header) => DllCall('Gdiplus\GdipGetMetafileHeaderFromMetafile', 'ptr', metafile, 'ptr', header, 'uint')
+
+	static GdipGetMetafileHeaderFromStream(stream, header) => DllCall('Gdiplus\GdipGetMetafileHeaderFromStream', 'ptr', stream, 'ptr', header, 'uint')
+
+	static GdipGetMetafileHeaderFromWmf(hWmf, wmfPlaceableFileHeader, header) => DllCall('Gdiplus\GdipGetMetafileHeaderFromWmf', 'ptr', hWmf, 'ptr', wmfPlaceableFileHeader, 'ptr', header, 'uint')
+
+	static GdipGetNearestColor(graphics, argb) => DllCall('Gdiplus\GdipGetNearestColor', 'ptr', graphics, 'ptr', argb, 'uint')
+
+	static GdipGetPageScale(graphics, scale) => DllCall('Gdiplus\GdipGetPageScale', 'ptr', graphics, 'ptr', scale, 'uint')
+
+	static GdipGetPageUnit(graphics, unit) => DllCall('Gdiplus\GdipGetPageUnit', 'ptr', graphics, 'ptr', unit, 'uint')
+
+	static GdipGetPathData(path, pathData) => DllCall('Gdiplus\GdipGetPathData', 'ptr', path, 'ptr', pathData, 'uint')
+
+	static GdipGetPathFillMode(path, fillmode) => DllCall('Gdiplus\GdipGetPathFillMode', 'ptr', path, 'ptr', fillmode, 'uint')
+
+	static GdipGetPathGradientBlend(brush, blend, positions, count) => DllCall('Gdiplus\GdipGetPathGradientBlend', 'ptr', brush, 'ptr', blend, 'ptr', positions, 'int', count, 'uint')
+
+	static GdipGetPathGradientBlendCount(brush, &count) => DllCall('Gdiplus\GdipGetPathGradientBlendCount', 'ptr', brush, 'int*', &count, 'uint')
+
+	static GdipGetPathGradientCenterColor(brush, colors) => DllCall('Gdiplus\GdipGetPathGradientCenterColor', 'ptr', brush, 'ptr', colors, 'uint')
+
+	static GdipGetPathGradientCenterPoint(brush, points) => DllCall('Gdiplus\GdipGetPathGradientCenterPoint', 'ptr', brush, 'ptr', points, 'uint')
+
+	static GdipGetPathGradientCenterPointI(brush, points) => DllCall('Gdiplus\GdipGetPathGradientCenterPointI', 'ptr', brush, 'ptr', points, 'uint')
+
+	static GdipGetPathGradientFocusScales(brush, xScale, yScale) => DllCall('Gdiplus\GdipGetPathGradientFocusScales', 'ptr', brush, 'ptr', xScale, 'ptr', yScale, 'uint')
+
+	static GdipGetPathGradientGammaCorrection(brush, &useGammaCorrection) => DllCall('Gdiplus\GdipGetPathGradientGammaCorrection', 'ptr', brush, 'int*', &useGammaCorrection, 'uint')
+
+	static GdipGetPathGradientPath(brush, path) => DllCall('Gdiplus\GdipGetPathGradientPath', 'ptr', brush, 'ptr', path, 'uint')
+
+	static GdipGetPathGradientPointCount(brush, &count) => DllCall('Gdiplus\GdipGetPathGradientPointCount', 'ptr', brush, 'int*', &count, 'uint')
+
+	static GdipGetPathGradientPresetBlend(brush, blend, positions, count) => DllCall('Gdiplus\GdipGetPathGradientPresetBlend', 'ptr', brush, 'ptr', blend, 'ptr', positions, 'int', count, 'uint')
+
+	static GdipGetPathGradientPresetBlendCount(brush, &count) => DllCall('Gdiplus\GdipGetPathGradientPresetBlendCount', 'ptr', brush, 'int*', &count, 'uint')
+
+	static GdipGetPathGradientRect(brush, rect) => DllCall('Gdiplus\GdipGetPathGradientRect', 'ptr', brush, 'ptr', rect, 'uint')
+
+	static GdipGetPathGradientRectI(brush, rect) => DllCall('Gdiplus\GdipGetPathGradientRectI', 'ptr', brush, 'ptr', rect, 'uint')
+
+	static GdipGetPathGradientSurroundColorCount(brush, &count) => DllCall('Gdiplus\GdipGetPathGradientSurroundColorCount', 'ptr', brush, 'int*', &count, 'uint')
+
+	static GdipGetPathGradientSurroundColorsWithCount(brush, color, &count) => DllCall('Gdiplus\GdipGetPathGradientSurroundColorsWithCount', 'ptr', brush, 'ptr', color, 'int*', &count, 'uint')
+
+	static GdipGetPathGradientTransform(brush, matrix) => DllCall('Gdiplus\GdipGetPathGradientTransform', 'ptr', brush, 'ptr', matrix, 'uint')
+
+	static GdipGetPathGradientWrapMode(brush, wrapmode) => DllCall('Gdiplus\GdipGetPathGradientWrapMode', 'ptr', brush, 'ptr', wrapmode, 'uint')
+
+	static GdipGetPathLastPoint(path, lastPoint) => DllCall('Gdiplus\GdipGetPathLastPoint', 'ptr', path, 'ptr', lastPoint, 'uint')
+
+	static GdipGetPathPoints(GpPath, points, count) => DllCall('Gdiplus\GdipGetPathPoints', 'ptr', GpPath, 'ptr', points, 'int', count, 'uint')
+
+	static GdipGetPathPointsI(GpPath, points, count) => DllCall('Gdiplus\GdipGetPathPointsI', 'ptr', GpPath, 'ptr', points, 'int', count, 'uint')
+
+	static GdipGetPathTypes(path, &types, count) => DllCall('Gdiplus\GdipGetPathTypes', 'ptr', path, 'uchar*', &types, 'int', count, 'uint')
+
+	static GdipGetPathWorldBounds(path, bounds, matrix, pen) => DllCall('Gdiplus\GdipGetPathWorldBounds', 'ptr', path, 'ptr', bounds, 'ptr', matrix, 'ptr', pen, 'uint')
+
+	static GdipGetPathWorldBoundsI(path, bounds, matrix, pen) => DllCall('Gdiplus\GdipGetPathWorldBoundsI', 'ptr', path, 'ptr', bounds, 'ptr', matrix, 'ptr', pen, 'uint')
+
+	static GdipGetPenBrushFill(pen, brush) => DllCall('Gdiplus\GdipGetPenBrushFill', 'ptr', pen, 'ptr', brush, 'uint')
+
+	static GdipGetPenColor(pen, argb) => DllCall('Gdiplus\GdipGetPenColor', 'ptr', pen, 'ptr', argb, 'uint')
+
+	static GdipGetPenCompoundArray(pen, dash, count) => DllCall('Gdiplus\GdipGetPenCompoundArray', 'ptr', pen, 'ptr', dash, 'int', count, 'uint')
+
+	static GdipGetPenCompoundCount(pen, &count) => DllCall('Gdiplus\GdipGetPenCompoundCount', 'ptr', pen, 'int*', &count, 'uint')
+
+	static GdipGetPenCustomEndCap(pen, customCap) => DllCall('Gdiplus\GdipGetPenCustomEndCap', 'ptr', pen, 'ptr', customCap, 'uint')
+
+	static GdipGetPenCustomStartCap(pen, customCap) => DllCall('Gdiplus\GdipGetPenCustomStartCap', 'ptr', pen, 'ptr', customCap, 'uint')
+
+	static GdipGetPenDashArray(pen, dash, count) => DllCall('Gdiplus\GdipGetPenDashArray', 'ptr', pen, 'ptr', dash, 'int', count, 'uint')
+
+	static GdipGetPenDashCap197819(pen, dashCap) => DllCall('Gdiplus\GdipGetPenDashCap197819', 'ptr', pen, 'ptr', dashCap, 'uint')
+
+	static GdipGetPenDashCount(pen, &count) => DllCall('Gdiplus\GdipGetPenDashCount', 'ptr', pen, 'int*', &count, 'uint')
+
+	static GdipGetPenDashOffset(pen, offset) => DllCall('Gdiplus\GdipGetPenDashOffset', 'ptr', pen, 'ptr', offset, 'uint')
+
+	static GdipGetPenDashStyle(pen, dashstyle) => DllCall('Gdiplus\GdipGetPenDashStyle', 'ptr', pen, 'ptr', dashstyle, 'uint')
+
+	static GdipGetPenEndCap(pen, endCap) => DllCall('Gdiplus\GdipGetPenEndCap', 'ptr', pen, 'ptr', endCap, 'uint')
+
+	static GdipGetPenFillType(pen, type) => DllCall('Gdiplus\GdipGetPenFillType', 'ptr', pen, 'ptr', type, 'uint')
+
+	static GdipGetPenLineJoin(pen, lineJoin) => DllCall('Gdiplus\GdipGetPenLineJoin', 'ptr', pen, 'ptr', lineJoin, 'uint')
+
+	static GdipGetPenMiterLimit(pen, miterLimit) => DllCall('Gdiplus\GdipGetPenMiterLimit', 'ptr', pen, 'ptr', miterLimit, 'uint')
+
+	static GdipGetPenMode(pen, penMode) => DllCall('Gdiplus\GdipGetPenMode', 'ptr', pen, 'ptr', penMode, 'uint')
+
+	static GdipGetPenStartCap(pen, startCap) => DllCall('Gdiplus\GdipGetPenStartCap', 'ptr', pen, 'ptr', startCap, 'uint')
+
+	static GdipGetPenTransform(pen, matrix) => DllCall('Gdiplus\GdipGetPenTransform', 'ptr', pen, 'ptr', matrix, 'uint')
+
+	static GdipGetPenUnit(pen, unit) => DllCall('Gdiplus\GdipGetPenUnit', 'ptr', pen, 'ptr', unit, 'uint')
+
+	static GdipGetPenWidth(pen, width) => DllCall('Gdiplus\GdipGetPenWidth', 'ptr', pen, 'ptr', width, 'uint')
+
+	static GdipGetPixelOffsetMode(graphics, pixelOffsetMode) => DllCall('Gdiplus\GdipGetPixelOffsetMode', 'ptr', graphics, 'ptr', pixelOffsetMode, 'uint')
+
+	static GdipGetPointCount(path, &count) => DllCall('Gdiplus\GdipGetPointCount', 'ptr', path, 'int*', &count, 'uint')
+
+	static GdipGetPropertyCount(image, &numOfProperty) => DllCall('Gdiplus\GdipGetPropertyCount', 'ptr', image, 'uint*', &numOfProperty, 'uint')
+
+	static GdipGetPropertyIdList(image, numOfProperty, list) => DllCall('Gdiplus\GdipGetPropertyIdList', 'ptr', image, 'uint', numOfProperty, 'ptr', list, 'uint')
+
+	static GdipGetPropertyItem(image, propId, propSize, buffer) => DllCall('Gdiplus\GdipGetPropertyItem', 'ptr', image, 'uint', propId, 'uint', propSize, 'ptr', buffer, 'uint')
+
+	static GdipGetPropertyItemSize(image, propId, &size) => DllCall('Gdiplus\GdipGetPropertyItemSize', 'ptr', image, 'uint', propId, 'uint*', &size, 'uint')
+
+	static GdipGetPropertySize(image, &totalBufferSize, &numProperties) => DllCall('Gdiplus\GdipGetPropertySize', 'ptr', image, 'uint*', &totalBufferSize, 'uint*', &numProperties, 'uint')
+
+	static GdipGetRegionBounds(region, graphics, rect) => DllCall('Gdiplus\GdipGetRegionBounds', 'ptr', region, 'ptr', graphics, 'ptr', rect, 'uint')
+
+	static GdipGetRegionBoundsI(region, graphics, rect) => DllCall('Gdiplus\GdipGetRegionBoundsI', 'ptr', region, 'ptr', graphics, 'ptr', rect, 'uint')
+
+	static GdipGetRegionData(region, &buffer, bufferSize, &sizeFilled) => DllCall('Gdiplus\GdipGetRegionData', 'ptr', region, 'uchar*', &buffer, 'uint', bufferSize, 'uint*', &sizeFilled, 'uint')
+
+	static GdipGetRegionDataSize(region, &bufferSize) => DllCall('Gdiplus\GdipGetRegionDataSize', 'ptr', region, 'uint*', &bufferSize, 'uint')
+
+	static GdipGetRegionHRgn(region, graphics, hRgn) => DllCall('Gdiplus\GdipGetRegionHRgn', 'ptr', region, 'ptr', graphics, 'ptr', hRgn, 'uint')
+
+	static GdipGetRegionScans(region, rects, &count, matrix) => DllCall('Gdiplus\GdipGetRegionScans', 'ptr', region, 'ptr', rects, 'int*', &count, 'ptr', matrix, 'uint')
+
+	static GdipGetRegionScansCount(region, &count, matrix) => DllCall('Gdiplus\GdipGetRegionScansCount', 'ptr', region, 'uint*', &count, 'ptr', matrix, 'uint')
+
+	static GdipGetRegionScansI(region, rects, &count, matrix) => DllCall('Gdiplus\GdipGetRegionScansI', 'ptr', region, 'ptr', rects, 'int*', &count, 'ptr', matrix, 'uint')
+
+	static GdipGetRenderingOrigin(graphics, &x, &y) => DllCall('Gdiplus\GdipGetRenderingOrigin', 'ptr', graphics, 'int*', &x, 'int*', &y, 'uint')
+
+	static GdipGetSmoothingMode(graphics, smoothingMode) => DllCall('Gdiplus\GdipGetSmoothingMode', 'ptr', graphics, 'ptr', smoothingMode, 'uint')
+
+	static GdipGetSolidFillColor(brush, color) => DllCall('Gdiplus\GdipGetSolidFillColor', 'ptr', brush, 'ptr', color, 'uint')
+
+	static GdipGetStringFormatAlign(format, align) => DllCall('Gdiplus\GdipGetStringFormatAlign', 'ptr', format, 'ptr', align, 'uint')
+
+	static GdipGetStringFormatDigitSubstitution(format, &language, substitute) => DllCall('Gdiplus\GdipGetStringFormatDigitSubstitution', 'ptr', format, 'ushort*', &language, 'ptr', substitute, 'uint')
+
+	static GdipGetStringFormatFlags(format, &flags) => DllCall('Gdiplus\GdipGetStringFormatFlags', 'ptr', format, 'int*', &flags, 'uint')
+
+	static GdipGetStringFormatHotkeyPrefix(format, &hotkeyPrefix) => DllCall('Gdiplus\GdipGetStringFormatHotkeyPrefix', 'ptr', format, 'int*', &hotkeyPrefix, 'uint')
+
+	static GdipGetStringFormatLineAlign(format, align) => DllCall('Gdiplus\GdipGetStringFormatLineAlign', 'ptr', format, 'ptr', align, 'uint')
+
+	static GdipGetStringFormatMeasurableCharacterRangeCount(format, &count) => DllCall('Gdiplus\GdipGetStringFormatMeasurableCharacterRangeCount', 'ptr', format, 'int*', &count, 'uint')
+
+	static GdipGetStringFormatTabStopCount(format, &count) => DllCall('Gdiplus\GdipGetStringFormatTabStopCount', 'ptr', format, 'int*', &count, 'uint')
+
+	static GdipGetStringFormatTabStops(format, count, firstTabOffset, tabStops) => DllCall('Gdiplus\GdipGetStringFormatTabStops', 'ptr', format, 'int', count, 'ptr', firstTabOffset, 'ptr', tabStops, 'uint')
+
+	static GdipGetStringFormatTrimming(format, trimming) => DllCall('Gdiplus\GdipGetStringFormatTrimming', 'ptr', format, 'ptr', trimming, 'uint')
+
+	static GdipGetTextRenderingHint(graphics, mode) => DllCall('Gdiplus\GdipGetTextRenderingHint', 'ptr', graphics, 'ptr', mode, 'uint')
+
+	static GdipGetTextureImage(brush, image) => DllCall('Gdiplus\GdipGetTextureImage', 'ptr', brush, 'ptr', image, 'uint')
+
+	static GdipGetTextureTransform(brush, matrix) => DllCall('Gdiplus\GdipGetTextureTransform', 'ptr', brush, 'ptr', matrix, 'uint')
+
+	static GdipGetTextureWrapMode(brush, wrapmode) => DllCall('Gdiplus\GdipGetTextureWrapMode', 'ptr', brush, 'ptr', wrapmode, 'uint')
+
+	static GdipGetVisibleClipBounds(graphics, rect) => DllCall('Gdiplus\GdipGetVisibleClipBounds', 'ptr', graphics, 'ptr', rect, 'uint')
+
+	static GdipGetVisibleClipBoundsI(graphics, rect) => DllCall('Gdiplus\GdipGetVisibleClipBoundsI', 'ptr', graphics, 'ptr', rect, 'uint')
+
+	static GdipGetWorldTransform(graphics, matrix) => DllCall('Gdiplus\GdipGetWorldTransform', 'ptr', graphics, 'ptr', matrix, 'uint')
+
+	static GdipGraphicsClear(graphics, color) => DllCall('Gdiplus\GdipGraphicsClear', 'ptr', graphics, 'uint', color, 'uint')
+
+	static GdipImageForceValidation(image) => DllCall('Gdiplus\GdipImageForceValidation', 'ptr', image, 'uint')
+
+	static GdipImageGetFrameCount(image, dimensionID, &count) => DllCall('Gdiplus\GdipImageGetFrameCount', 'ptr', image, 'ptr', dimensionID, 'uint*', &count, 'uint')
+
+	static GdipImageGetFrameDimensionsCount(image, &count) => DllCall('Gdiplus\GdipImageGetFrameDimensionsCount', 'ptr', image, 'uint*', &count, 'uint')
+
+	static GdipImageGetFrameDimensionsList(image, dimensionIDs, count) => DllCall('Gdiplus\GdipImageGetFrameDimensionsList', 'ptr', image, 'ptr', dimensionIDs, 'uint', count, 'uint')
+
+	static GdipImageRotateFlip(image, rfType) => DllCall('Gdiplus\GdipImageRotateFlip', 'ptr', image, 'uint', rfType, 'uint')
+
+	static GdipImageSelectActiveFrame(image, dimensionID, frameIndex) => DllCall('Gdiplus\GdipImageSelectActiveFrame', 'ptr', image, 'ptr', dimensionID, 'uint', frameIndex, 'uint')
+
+	static GdipInvertMatrix(matrix) => DllCall('Gdiplus\GdipInvertMatrix', 'ptr', matrix, 'uint')
+
+	static GdipIsClipEmpty(graphics, &result) => DllCall('Gdiplus\GdipIsClipEmpty', 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsEmptyRegion(region, graphics, &result) => DllCall('Gdiplus\GdipIsEmptyRegion', 'ptr', region, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsEqualRegion(region, region2, graphics, &result) => DllCall('Gdiplus\GdipIsEqualRegion', 'ptr', region, 'ptr', region2, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsInfiniteRegion(region, graphics, &result) => DllCall('Gdiplus\GdipIsInfiniteRegion', 'ptr', region, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsMatrixEqual(matrix, matrix2, &result) => DllCall('Gdiplus\GdipIsMatrixEqual', 'ptr', matrix, 'ptr', matrix2, 'int*', &result, 'uint')
+
+	static GdipIsMatrixIdentity(matrix, &result) => DllCall('Gdiplus\GdipIsMatrixIdentity', 'ptr', matrix, 'int*', &result, 'uint')
+
+	static GdipIsMatrixInvertible(matrix, &result) => DllCall('Gdiplus\GdipIsMatrixInvertible', 'ptr', matrix, 'int*', &result, 'uint')
+
+	static GdipIsOutlineVisiblePathPoint(path, x, y, pen, graphics, &result) => DllCall('Gdiplus\GdipIsOutlineVisiblePathPoint', 'ptr', path, 'int', x, 'int', y, 'ptr', pen, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsOutlineVisiblePathPointI(path, x, y, pen, graphics, &result) => DllCall('Gdiplus\GdipIsOutlineVisiblePathPointI', 'ptr', path, 'int', x, 'int', y, 'ptr', pen, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsVisibleClipEmpty(graphics, &result) => DllCall('Gdiplus\GdipIsVisibleClipEmpty', 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsVisiblePathPoint(path, x, y, graphics, &result) => DllCall('Gdiplus\GdipIsVisiblePathPoint', 'ptr', path, 'int', x, 'int', y, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsVisiblePathPointI(path, x, y, graphics, &result) => DllCall('Gdiplus\GdipIsVisiblePathPointI', 'ptr', path, 'int', x, 'int', y, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsVisiblePoint(graphics, x, y, &result) => DllCall('Gdiplus\GdipIsVisiblePoint', 'ptr', graphics, 'int', x, 'int', y, 'int*', &result, 'uint')
+
+	static GdipIsVisiblePointI(graphics, x, y, &result) => DllCall('Gdiplus\GdipIsVisiblePointI', 'ptr', graphics, 'int', x, 'int', y, 'int*', &result, 'uint')
+
+	static GdipIsVisibleRect(graphics, x, y, width, height, &result) => DllCall('Gdiplus\GdipIsVisibleRect', 'ptr', graphics, 'int', x, 'int', y, 'int', width, 'int', height, 'int*', &result, 'uint')
+
+	static GdipIsVisibleRectI(graphics, x, y, width, height, &result) => DllCall('Gdiplus\GdipIsVisibleRectI', 'ptr', graphics, 'int', x, 'int', y, 'int', width, 'int', height, 'int*', &result, 'uint')
+
+	static GdipIsVisibleRegionPoint(region, x, y, graphics, &result) => DllCall('Gdiplus\GdipIsVisibleRegionPoint', 'ptr', region, 'int', x, 'int', y, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsVisibleRegionPointI(region, x, y, graphics, &result) => DllCall('Gdiplus\GdipIsVisibleRegionPointI', 'ptr', region, 'int', x, 'int', y, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsVisibleRegionRect(region, x, y, width, height, graphics, &result) => DllCall('Gdiplus\GdipIsVisibleRegionRect', 'ptr', region, 'int', x, 'int', y, 'int', width, 'int', height, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipIsVisibleRegionRectI(region, x, y, width, height, graphics, &result) => DllCall('Gdiplus\GdipIsVisibleRegionRectI', 'ptr', region, 'int', x, 'int', y, 'int', width, 'int', height, 'ptr', graphics, 'int*', &result, 'uint')
+
+	static GdipLoadImageFromFile(filename, image) => DllCall('Gdiplus\GdipLoadImageFromFile', 'ptr', filename, 'ptr', image, 'uint')
+
+	static GdipLoadImageFromFileICM(filename, image) => DllCall('Gdiplus\GdipLoadImageFromFileICM', 'ptr', filename, 'ptr', image, 'uint')
+
+	static GdipLoadImageFromStream(stream, image) => DllCall('Gdiplus\GdipLoadImageFromStream', 'ptr', stream, 'ptr', image, 'uint')
+
+	static GdipLoadImageFromStreamICM(stream, image) => DllCall('Gdiplus\GdipLoadImageFromStreamICM', 'ptr', stream, 'ptr', image, 'uint')
+
+	static GdipMeasureCharacterRanges(graphics, string, length, font, &layoutRect, stringFormat, regionCount, regions) => DllCall('Gdiplus\GdipMeasureCharacterRanges', 'ptr', graphics, 'ptr', string, 'int', length, 'ptr', font, 'uint', &layoutRect, 'ptr', stringFormat, 'int', regionCount, 'ptr', regions, 'uint')
+
+	static GdipMeasureDriverString(graphics, text, length, font, positions, flags, matrix, boundingBox) => DllCall('Gdiplus\GdipMeasureDriverString', 'ptr', graphics, 'ptr', text, 'int', length, 'ptr', font, 'ptr', positions, 'int', flags, 'ptr', matrix, 'ptr', boundingBox, 'uint')
+
+	static GdipMeasureString(graphics, string, length, font, layoutRect, stringFormat, boundingBox, &codepointsFitted, &linesFilled) => DllCall('Gdiplus\GdipMeasureString', 'ptr', graphics, 'ptr', string, 'int', length, 'ptr', font, 'ptr', layoutRect, 'ptr', stringFormat, 'ptr', boundingBox, 'int*', &codepointsFitted, 'int*', &linesFilled, 'uint')
+
+	static GdipMultiplyLineTransform(brush, matrix, order) => DllCall('Gdiplus\GdipMultiplyLineTransform', 'ptr', brush, 'ptr', matrix, 'uint', order, 'uint')
+
+	static GdipMultiplyMatrix(matrix, matrix2, order) => DllCall('Gdiplus\GdipMultiplyMatrix', 'ptr', matrix, 'ptr', matrix2, 'uint', order, 'uint')
+
+	static GdipMultiplyPathGradientTransform(brush, matrix, order) => DllCall('Gdiplus\GdipMultiplyPathGradientTransform', 'ptr', brush, 'ptr', matrix, 'uint', order, 'uint')
+
+	static GdipMultiplyPenTransform(pen, matrix, order) => DllCall('Gdiplus\GdipMultiplyPenTransform', 'ptr', pen, 'ptr', matrix, 'uint', order, 'uint')
+
+	static GdipMultiplyTextureTransform(brush, matrix, order) => DllCall('Gdiplus\GdipMultiplyTextureTransform', 'ptr', brush, 'ptr', matrix, 'uint', order, 'uint')
+
+	static GdipMultiplyWorldTransform(graphics, matrix, order) => DllCall('Gdiplus\GdipMultiplyWorldTransform', 'ptr', graphics, 'ptr', matrix, 'uint', order, 'uint')
+
+	static GdipNewInstalledFontCollection(fontCollection) => DllCall('Gdiplus\GdipNewInstalledFontCollection', 'ptr', fontCollection, 'uint')
+
+	static GdipNewPrivateFontCollection(fontCollection) => DllCall('Gdiplus\GdipNewPrivateFontCollection', 'ptr', fontCollection, 'uint')
+
+	static GdipPathIterCopyData(iterator, &resultCount, points, &types, startIndex, endIndex) => DllCall('Gdiplus\GdipPathIterCopyData', 'ptr', iterator, 'int*', &resultCount, 'ptr', points, 'uchar*', &types, 'int', startIndex, 'int', endIndex, 'uint')
+
+	static GdipPathIterEnumerate(iterator, &resultCount, points, &types, count) => DllCall('Gdiplus\GdipPathIterEnumerate', 'ptr', iterator, 'int*', &resultCount, 'ptr', points, 'uchar*', &types, 'int', count, 'uint')
+
+	static GdipPathIterGetCount(iterator, &count) => DllCall('Gdiplus\GdipPathIterGetCount', 'ptr', iterator, 'int*', &count, 'uint')
+
+	static GdipPathIterGetSubpathCount(iterator, &count) => DllCall('Gdiplus\GdipPathIterGetSubpathCount', 'ptr', iterator, 'int*', &count, 'uint')
+
+	static GdipPathIterHasCurve(iterator, &hasCurve) => DllCall('Gdiplus\GdipPathIterHasCurve', 'ptr', iterator, 'int*', &hasCurve, 'uint')
+
+	static GdipPathIterIsValid(iterator, &valid) => DllCall('Gdiplus\GdipPathIterIsValid', 'ptr', iterator, 'int*', &valid, 'uint')
+
+	static GdipPathIterNextMarker(iterator, &resultCount, &startIndex, &endIndex) => DllCall('Gdiplus\GdipPathIterNextMarker', 'ptr', iterator, 'int*', &resultCount, 'int*', &startIndex, 'int*', &endIndex, 'uint')
+
+	static GdipPathIterNextMarkerPath(iterator, &resultCount, path) => DllCall('Gdiplus\GdipPathIterNextMarkerPath', 'ptr', iterator, 'int*', &resultCount, 'ptr', path, 'uint')
+
+	static GdipPathIterNextPathType(iterator, &resultCount, &pathType, &startIndex, &endIndex) => DllCall('Gdiplus\GdipPathIterNextPathType', 'ptr', iterator, 'int*', &resultCount, 'uchar*', &pathType, 'int*', &startIndex, 'int*', &endIndex, 'uint')
+
+	static GdipPathIterNextSubpath(iterator, &resultCount, &startIndex, &endIndex, &isClosed) => DllCall('Gdiplus\GdipPathIterNextSubpath', 'ptr', iterator, 'int*', &resultCount, 'int*', &startIndex, 'int*', &endIndex, 'int*', &isClosed, 'uint')
+
+	static GdipPathIterNextSubpathPath(iterator, &resultCount, path, &isClosed) => DllCall('Gdiplus\GdipPathIterNextSubpathPath', 'ptr', iterator, 'int*', &resultCount, 'ptr', path, 'int*', &isClosed, 'uint')
+
+	static GdipPathIterRewind(iterator) => DllCall('Gdiplus\GdipPathIterRewind', 'ptr', iterator, 'uint')
+
+	static GdipPlayMetafileRecord(metafile, recordType, flags, dataSize, data) => DllCall('Gdiplus\GdipPlayMetafileRecord', 'ptr', metafile, 'ptr', recordType, 'uint', flags, 'uint', dataSize, 'ptr', data, 'uint')
+
+	static GdipPrivateAddFontFile(fontCollection, filename) => DllCall('Gdiplus\GdipPrivateAddFontFile', 'ptr', fontCollection, 'ptr', filename, 'uint')
+
+	static GdipPrivateAddMemoryFont(fontCollection, memory, length) => DllCall('Gdiplus\GdipPrivateAddMemoryFont', 'ptr', fontCollection, 'ptr', memory, 'int', length, 'uint')
+
+	static GdipRecordMetafile(referenceHdc, type, frameRect, frameUnit, description, metafile) => DllCall('Gdiplus\GdipRecordMetafile', 'ptr', referenceHdc, 'ptr', type, 'ptr', frameRect, 'uint', frameUnit, 'ptr', description, 'ptr', metafile, 'uint')
+
+	static GdipRecordMetafileFileName(fileName, referenceHdc, type, frameRect, frameUnit, description, metafile) => DllCall('Gdiplus\GdipRecordMetafileFileName', 'ptr', fileName, 'ptr', referenceHdc, 'ptr', type, 'ptr', frameRect, 'uint', frameUnit, 'ptr', description, 'ptr', metafile, 'uint')
+
+	static GdipRecordMetafileFileNameI(fileName, referenceHdc, type, frameRect, frameUnit, description, metafile) => DllCall('Gdiplus\GdipRecordMetafileFileNameI', 'ptr', fileName, 'ptr', referenceHdc, 'ptr', type, 'ptr', frameRect, 'uint', frameUnit, 'ptr', description, 'ptr', metafile, 'uint')
+
+	static GdipRecordMetafileI(referenceHdc, type, frameRect, frameUnit, description, metafile) => DllCall('Gdiplus\GdipRecordMetafileI', 'ptr', referenceHdc, 'ptr', type, 'ptr', frameRect, 'uint', frameUnit, 'ptr', description, 'ptr', metafile, 'uint')
+
+	static GdipRecordMetafileStream(stream, referenceHdc, type, frameRect, frameUnit, description, metafile) => DllCall('Gdiplus\GdipRecordMetafileStream', 'ptr', stream, 'ptr', referenceHdc, 'ptr', type, 'ptr', frameRect, 'uint', frameUnit, 'ptr', description, 'ptr', metafile, 'uint')
+
+	static GdipRecordMetafileStreamI(stream, referenceHdc, type, frameRect, frameUnit, description, metafile) => DllCall('Gdiplus\GdipRecordMetafileStreamI', 'ptr', stream, 'ptr', referenceHdc, 'ptr', type, 'ptr', frameRect, 'uint', frameUnit, 'ptr', description, 'ptr', metafile, 'uint')
+
+	static GdipReleaseDC(graphics, hdc) => DllCall('Gdiplus\GdipReleaseDC', 'ptr', graphics, 'ptr', hdc, 'uint')
+
+	static GdipRemovePropertyItem(image, propId) => DllCall('Gdiplus\GdipRemovePropertyItem', 'ptr', image, 'uint', propId, 'uint')
+
+	static GdipResetClip(graphics) => DllCall('Gdiplus\GdipResetClip', 'ptr', graphics, 'uint')
+
+	static GdipResetImageAttributes(imageattr, type) => DllCall('Gdiplus\GdipResetImageAttributes', 'ptr', imageattr, 'ptr', type, 'uint')
+
+	static GdipResetLineTransform(brush) => DllCall('Gdiplus\GdipResetLineTransform', 'ptr', brush, 'uint')
+
+	static GdipResetPageTransform(graphics) => DllCall('Gdiplus\GdipResetPageTransform', 'ptr', graphics, 'uint')
+
+	static GdipResetPath(path) => DllCall('Gdiplus\GdipResetPath', 'ptr', path, 'uint')
+
+	static GdipResetPathGradientTransform(brush) => DllCall('Gdiplus\GdipResetPathGradientTransform', 'ptr', brush, 'uint')
+
+	static GdipResetPenTransform(pen) => DllCall('Gdiplus\GdipResetPenTransform', 'ptr', pen, 'uint')
+
+	static GdipResetTextureTransform(brush) => DllCall('Gdiplus\GdipResetTextureTransform', 'ptr', brush, 'uint')
+
+	static GdipResetWorldTransform(graphics) => DllCall('Gdiplus\GdipResetWorldTransform', 'ptr', graphics, 'uint')
+
+	static GdipRestoreGraphics(graphics, state) => DllCall('Gdiplus\GdipRestoreGraphics', 'ptr', graphics, 'uint', state, 'uint')
+
+	static GdipReversePath(path) => DllCall('Gdiplus\GdipReversePath', 'ptr', path, 'uint')
+
+	static GdipRotateLineTransform(brush, angle, order) => DllCall('Gdiplus\GdipRotateLineTransform', 'ptr', brush, 'int', angle, 'uint', order, 'uint')
+
+	static GdipRotateMatrix(matrix, angle, order) => DllCall('Gdiplus\GdipRotateMatrix', 'ptr', matrix, 'int', angle, 'uint', order, 'uint')
+
+	static GdipRotatePathGradientTransform(brush, angle, order) => DllCall('Gdiplus\GdipRotatePathGradientTransform', 'ptr', brush, 'int', angle, 'uint', order, 'uint')
+
+	static GdipRotatePenTransform(pen, angle, order) => DllCall('Gdiplus\GdipRotatePenTransform', 'ptr', pen, 'int', angle, 'uint', order, 'uint')
+
+	static GdipRotateTextureTransform(brush, angle, order) => DllCall('Gdiplus\GdipRotateTextureTransform', 'ptr', brush, 'int', angle, 'uint', order, 'uint')
+
+	static GdipRotateWorldTransform(graphics, angle, order) => DllCall('Gdiplus\GdipRotateWorldTransform', 'ptr', graphics, 'int', angle, 'uint', order, 'uint')
+
+	static GdipSaveAdd(image, encoderParams) => DllCall('Gdiplus\GdipSaveAdd', 'ptr', image, 'ptr', encoderParams, 'uint')
+
+	static GdipSaveAddImage(image, newImage, encoderParams) => DllCall('Gdiplus\GdipSaveAddImage', 'ptr', image, 'ptr', newImage, 'ptr', encoderParams, 'uint')
+
+	static GdipSaveGraphics(graphics, state) => DllCall('Gdiplus\GdipSaveGraphics', 'ptr', graphics, 'ptr', state, 'uint')
+
+	static GdipSaveImageToFile(image, filename, clsidEncoder, encoderParams) => DllCall('Gdiplus\GdipSaveImageToFile', 'ptr', image, 'ptr', filename, 'ptr', clsidEncoder, 'ptr', encoderParams, 'uint')
+
+	static GdipSaveImageToStream(image, stream, clsidEncoder, encoderParams) => DllCall('Gdiplus\GdipSaveImageToStream', 'ptr', image, 'ptr', stream, 'ptr', clsidEncoder, 'ptr', encoderParams, 'uint')
+
+	static GdipScaleLineTransform(brush, sx, sy, order) => DllCall('Gdiplus\GdipScaleLineTransform', 'ptr', brush, 'int', sx, 'int', sy, 'uint', order, 'uint')
+
+	static GdipScaleMatrix(matrix, scaleX, scaleY, order) => DllCall('Gdiplus\GdipScaleMatrix', 'ptr', matrix, 'int', scaleX, 'int', scaleY, 'uint', order, 'uint')
+
+	static GdipScalePathGradientTransform(brush, sx, sy, order) => DllCall('Gdiplus\GdipScalePathGradientTransform', 'ptr', brush, 'int', sx, 'int', sy, 'uint', order, 'uint')
+
+	static GdipScalePenTransform(pen, sx, sy, order) => DllCall('Gdiplus\GdipScalePenTransform', 'ptr', pen, 'int', sx, 'int', sy, 'uint', order, 'uint')
+
+	static GdipScaleTextureTransform(brush, sx, sy, order) => DllCall('Gdiplus\GdipScaleTextureTransform', 'ptr', brush, 'int', sx, 'int', sy, 'uint', order, 'uint')
+
+	static GdipScaleWorldTransform(graphics, sx, sy, order) => DllCall('Gdiplus\GdipScaleWorldTransform', 'ptr', graphics, 'int', sx, 'int', sy, 'uint', order, 'uint')
+
+	static GdipSetAdjustableArrowCapFillState(cap, fillState) => DllCall('Gdiplus\GdipSetAdjustableArrowCapFillState', 'ptr', cap, 'int', fillState, 'uint')
+
+	static GdipSetAdjustableArrowCapHeight(cap, height) => DllCall('Gdiplus\GdipSetAdjustableArrowCapHeight', 'ptr', cap, 'int', height, 'uint')
+
+	static GdipSetAdjustableArrowCapMiddleInset(cap, middleInset) => DllCall('Gdiplus\GdipSetAdjustableArrowCapMiddleInset', 'ptr', cap, 'int', middleInset, 'uint')
+
+	static GdipSetAdjustableArrowCapWidth(cap, width) => DllCall('Gdiplus\GdipSetAdjustableArrowCapWidth', 'ptr', cap, 'int', width, 'uint')
+
+	static GdipSetClipGraphics(graphics, srcgraphics, combineMode) => DllCall('Gdiplus\GdipSetClipGraphics', 'ptr', graphics, 'ptr', srcgraphics, 'ptr', combineMode, 'uint')
+
+	static GdipSetClipHrgn(graphics, hRgn, combineMode) => DllCall('Gdiplus\GdipSetClipHrgn', 'ptr', graphics, 'ptr', hRgn, 'ptr', combineMode, 'uint')
+
+	static GdipSetClipPath(graphics, path, combineMode) => DllCall('Gdiplus\GdipSetClipPath', 'ptr', graphics, 'ptr', path, 'ptr', combineMode, 'uint')
+
+	static GdipSetClipRect(graphics, x, y, width, height, combineMode) => DllCall('Gdiplus\GdipSetClipRect', 'ptr', graphics, 'int', x, 'int', y, 'int', width, 'int', height, 'ptr', combineMode, 'uint')
+
+	static GdipSetClipRectI(graphics, x, y, width, height, combineMode) => DllCall('Gdiplus\GdipSetClipRectI', 'ptr', graphics, 'int', x, 'int', y, 'int', width, 'int', height, 'ptr', combineMode, 'uint')
+
+	static GdipSetClipRegion(graphics, region, combineMode) => DllCall('Gdiplus\GdipSetClipRegion', 'ptr', graphics, 'ptr', region, 'ptr', combineMode, 'uint')
+
+	static GdipSetCompositingMode(graphics, compositingMode) => DllCall('Gdiplus\GdipSetCompositingMode', 'ptr', graphics, 'ptr', compositingMode, 'uint')
+
+	static GdipSetCompositingQuality(graphics, compositingQuality) => DllCall('Gdiplus\GdipSetCompositingQuality', 'ptr', graphics, 'ptr', compositingQuality, 'uint')
+
+	static GdipSetCustomLineCapBaseCap(customCap, baseCap) => DllCall('Gdiplus\GdipSetCustomLineCapBaseCap', 'ptr', customCap, 'uint', baseCap, 'uint')
+
+	static GdipSetCustomLineCapBaseInset(customCap, inset) => DllCall('Gdiplus\GdipSetCustomLineCapBaseInset', 'ptr', customCap, 'int', inset, 'uint')
+
+	static GdipSetCustomLineCapStrokeCaps(customCap, startCap, endCap) => DllCall('Gdiplus\GdipSetCustomLineCapStrokeCaps', 'ptr', customCap, 'uint', startCap, 'uint', endCap, 'uint')
+
+	static GdipSetCustomLineCapStrokeJoin(customCap, lineJoin) => DllCall('Gdiplus\GdipSetCustomLineCapStrokeJoin', 'ptr', customCap, 'uint', lineJoin, 'uint')
+
+	static GdipSetCustomLineCapWidthScale(customCap, widthScale) => DllCall('Gdiplus\GdipSetCustomLineCapWidthScale', 'ptr', customCap, 'int', widthScale, 'uint')
+
+	static GdipSetEmpty(region) => DllCall('Gdiplus\GdipSetEmpty', 'ptr', region, 'uint')
+
+	static GdipSetImageAttributesCachedBackground(imageattr, enableFlag) => DllCall('Gdiplus\GdipSetImageAttributesCachedBackground', 'ptr', imageattr, 'int', enableFlag, 'uint')
+
+	static GdipSetImageAttributesColorKeys(imageattr, type, enableFlag, colorLow, colorHigh) => DllCall('Gdiplus\GdipSetImageAttributesColorKeys', 'ptr', imageattr, 'ptr', type, 'int', enableFlag, 'uint', colorLow, 'uint', colorHigh, 'uint')
+
+	static GdipSetImageAttributesColorMatrix(imageattr, type, enableFlag, colorMatrix, grayMatrix, flags) => DllCall('Gdiplus\GdipSetImageAttributesColorMatrix', 'ptr', imageattr, 'ptr', type, 'int', enableFlag, 'ptr', colorMatrix, 'ptr', grayMatrix, 'ptr', flags, 'uint')
+
+	static GdipSetImageAttributesGamma(imageattr, type, enableFlag, gamma) => DllCall('Gdiplus\GdipSetImageAttributesGamma', 'ptr', imageattr, 'ptr', type, 'int', enableFlag, 'int', gamma, 'uint')
+
+	static GdipSetImageAttributesNoOp(imageattr, type, enableFlag) => DllCall('Gdiplus\GdipSetImageAttributesNoOp', 'ptr', imageattr, 'ptr', type, 'int', enableFlag, 'uint')
+
+	static GdipSetImageAttributesOutputChannel(imageattr, type, enableFlag, channelFlags) => DllCall('Gdiplus\GdipSetImageAttributesOutputChannel', 'ptr', imageattr, 'ptr', type, 'int', enableFlag, 'ptr', channelFlags, 'uint')
+
+	static GdipSetImageAttributesOutputChannelColorProfile(imageattr, type, enableFlag, colorProfileFilename) => DllCall('Gdiplus\GdipSetImageAttributesOutputChannelColorProfile', 'ptr', imageattr, 'ptr', type, 'int', enableFlag, 'ptr', colorProfileFilename, 'uint')
+
+	static GdipSetImageAttributesRemapTable(imageattr, type, enableFlag, mapSize, map) => DllCall('Gdiplus\GdipSetImageAttributesRemapTable', 'ptr', imageattr, 'ptr', type, 'int', enableFlag, 'uint', mapSize, 'ptr', map, 'uint')
+
+	static GdipSetImageAttributesThreshold(imageattr, type, enableFlag, threshold) => DllCall('Gdiplus\GdipSetImageAttributesThreshold', 'ptr', imageattr, 'ptr', type, 'int', enableFlag, 'int', threshold, 'uint')
+
+	static GdipSetImageAttributesToIdentity(imageattr, type) => DllCall('Gdiplus\GdipSetImageAttributesToIdentity', 'ptr', imageattr, 'ptr', type, 'uint')
+
+	static GdipSetImageAttributesWrapMode(imageAttr, wrap, argb, clamp) => DllCall('Gdiplus\GdipSetImageAttributesWrapMode', 'ptr', imageAttr, 'uint', wrap, 'uint', argb, 'int', clamp, 'uint')
+
+	static GdipSetImagePalette(image, palette) => DllCall('Gdiplus\GdipSetImagePalette', 'ptr', image, 'ptr', palette, 'uint')
+
+	static GdipSetInfinite(region) => DllCall('Gdiplus\GdipSetInfinite', 'ptr', region, 'uint')
+
+	static GdipSetInterpolationMode(graphics, interpolationMode) => DllCall('Gdiplus\GdipSetInterpolationMode', 'ptr', graphics, 'uint', interpolationMode, 'uint')
+
+	static GdipSetLineBlend(brush, blend, positions, count) => DllCall('Gdiplus\GdipSetLineBlend', 'ptr', brush, 'ptr', blend, 'ptr', positions, 'int', count, 'uint')
+
+	static GdipSetLineColors(brush, color1, color2) => DllCall('Gdiplus\GdipSetLineColors', 'ptr', brush, 'uint', color1, 'uint', color2, 'uint')
+
+	static GdipSetLineGammaCorrection(brush, useGammaCorrection) => DllCall('Gdiplus\GdipSetLineGammaCorrection', 'ptr', brush, 'int', useGammaCorrection, 'uint')
+
+	static GdipSetLineLinearBlend(brush, focus, scale) => DllCall('Gdiplus\GdipSetLineLinearBlend', 'ptr', brush, 'int', focus, 'int', scale, 'uint')
+
+	static GdipSetLinePresetBlend(brush, blend, positions, count) => DllCall('Gdiplus\GdipSetLinePresetBlend', 'ptr', brush, 'ptr', blend, 'ptr', positions, 'int', count, 'uint')
+
+	static GdipSetLineSigmaBlend(brush, focus, scale) => DllCall('Gdiplus\GdipSetLineSigmaBlend', 'ptr', brush, 'int', focus, 'int', scale, 'uint')
+
+	static GdipSetLineTransform(brush, matrix) => DllCall('Gdiplus\GdipSetLineTransform', 'ptr', brush, 'ptr', matrix, 'uint')
+
+	static GdipSetLineWrapMode(brush, wrapmode) => DllCall('Gdiplus\GdipSetLineWrapMode', 'ptr', brush, 'uint', wrapmode, 'uint')
+
+	static GdipSetMatrixElements(matrix, m11, m12, m21, m22, dx, dy) => DllCall('Gdiplus\GdipSetMatrixElements', 'ptr', matrix, 'int', m11, 'int', m12, 'int', m21, 'int', m22, 'int', dx, 'int', dy, 'uint')
+
+	static GdipSetMetafileDownLevelRasterizationLimit(metafile, metafileRasterizationLimitDpi) => DllCall('Gdiplus\GdipSetMetafileDownLevelRasterizationLimit', 'ptr', metafile, 'uint', metafileRasterizationLimitDpi, 'uint')
+
+	static GdipSetPageScale(graphics, scale) => DllCall('Gdiplus\GdipSetPageScale', 'ptr', graphics, 'int', scale, 'uint')
+
+	static GdipSetPageUnit(graphics, unit) => DllCall('Gdiplus\GdipSetPageUnit', 'ptr', graphics, 'uint', unit, 'uint')
+
+	static GdipSetPathFillMode(path, fillmode) => DllCall('Gdiplus\GdipSetPathFillMode', 'ptr', path, 'uint', fillmode, 'uint')
+
+	static GdipSetPathGradientBlend(brush, blend, positions, count) => DllCall('Gdiplus\GdipSetPathGradientBlend', 'ptr', brush, 'ptr', blend, 'ptr', positions, 'int', count, 'uint')
+
+	static GdipSetPathGradientCenterColor(brush, colors) => DllCall('Gdiplus\GdipSetPathGradientCenterColor', 'ptr', brush, 'uint', colors, 'uint')
+
+	static GdipSetPathGradientCenterPoint(brush, points) => DllCall('Gdiplus\GdipSetPathGradientCenterPoint', 'ptr', brush, 'ptr', points, 'uint')
+
+	static GdipSetPathGradientCenterPointI(brush, points) => DllCall('Gdiplus\GdipSetPathGradientCenterPointI', 'ptr', brush, 'ptr', points, 'uint')
+
+	static GdipSetPathGradientFocusScales(brush, xScale, yScale) => DllCall('Gdiplus\GdipSetPathGradientFocusScales', 'ptr', brush, 'int', xScale, 'int', yScale, 'uint')
+
+	static GdipSetPathGradientGammaCorrection(brush, useGammaCorrection) => DllCall('Gdiplus\GdipSetPathGradientGammaCorrection', 'ptr', brush, 'int', useGammaCorrection, 'uint')
+
+	static GdipSetPathGradientLinearBlend(brush, focus, scale) => DllCall('Gdiplus\GdipSetPathGradientLinearBlend', 'ptr', brush, 'int', focus, 'int', scale, 'uint')
+
+	static GdipSetPathGradientPath(brush, path) => DllCall('Gdiplus\GdipSetPathGradientPath', 'ptr', brush, 'ptr', path, 'uint')
+
+	static GdipSetPathGradientPresetBlend(brush, blend, positions, count) => DllCall('Gdiplus\GdipSetPathGradientPresetBlend', 'ptr', brush, 'ptr', blend, 'ptr', positions, 'int', count, 'uint')
+
+	static GdipSetPathGradientSigmaBlend(brush, focus, scale) => DllCall('Gdiplus\GdipSetPathGradientSigmaBlend', 'ptr', brush, 'int', focus, 'int', scale, 'uint')
+
+	static GdipSetPathGradientSurroundColorsWithCount(brush, color, &count) => DllCall('Gdiplus\GdipSetPathGradientSurroundColorsWithCount', 'ptr', brush, 'ptr', color, 'int*', &count, 'uint')
+
+	static GdipSetPathGradientTransform(brush, matrix) => DllCall('Gdiplus\GdipSetPathGradientTransform', 'ptr', brush, 'ptr', matrix, 'uint')
+
+	static GdipSetPathGradientWrapMode(brush, wrapmode) => DllCall('Gdiplus\GdipSetPathGradientWrapMode', 'ptr', brush, 'uint', wrapmode, 'uint')
+
+	static GdipSetPathMarker(path) => DllCall('Gdiplus\GdipSetPathMarker', 'ptr', path, 'uint')
+
+	static GdipSetPenBrushFill(pen, brush) => DllCall('Gdiplus\GdipSetPenBrushFill', 'ptr', pen, 'ptr', brush, 'uint')
+
+	static GdipSetPenColor(pen, argb) => DllCall('Gdiplus\GdipSetPenColor', 'ptr', pen, 'uint', argb, 'uint')
+
+	static GdipSetPenCompoundArray(pen, dash, count) => DllCall('Gdiplus\GdipSetPenCompoundArray', 'ptr', pen, 'ptr', dash, 'int', count, 'uint')
+
+	static GdipSetPenCustomEndCap(pen, customCap) => DllCall('Gdiplus\GdipSetPenCustomEndCap', 'ptr', pen, 'ptr', customCap, 'uint')
+
+	static GdipSetPenCustomStartCap(pen, customCap) => DllCall('Gdiplus\GdipSetPenCustomStartCap', 'ptr', pen, 'ptr', customCap, 'uint')
+
+	static GdipSetPenDashArray(pen, dash, count) => DllCall('Gdiplus\GdipSetPenDashArray', 'ptr', pen, 'ptr', dash, 'int', count, 'uint')
+
+	static GdipSetPenDashCap197819(pen, dashCap) => DllCall('Gdiplus\GdipSetPenDashCap197819', 'ptr', pen, 'uint', dashCap, 'uint')
+
+	static GdipSetPenDashOffset(pen, offset) => DllCall('Gdiplus\GdipSetPenDashOffset', 'ptr', pen, 'int', offset, 'uint')
+
+	static GdipSetPenDashStyle(pen, dashstyle) => DllCall('Gdiplus\GdipSetPenDashStyle', 'ptr', pen, 'uint', dashstyle, 'uint')
+
+	static GdipSetPenEndCap(pen, endCap) => DllCall('Gdiplus\GdipSetPenEndCap', 'ptr', pen, 'uint', endCap, 'uint')
+
+	static GdipSetPenLineCap197819(pen, startCap, endCap, dashCap) => DllCall('Gdiplus\GdipSetPenLineCap197819', 'ptr', pen, 'uint', startCap, 'uint', endCap, 'uint', dashCap, 'uint')
+
+	static GdipSetPenLineJoin(pen, lineJoin) => DllCall('Gdiplus\GdipSetPenLineJoin', 'ptr', pen, 'uint', lineJoin, 'uint')
+
+	static GdipSetPenMiterLimit(pen, miterLimit) => DllCall('Gdiplus\GdipSetPenMiterLimit', 'ptr', pen, 'int', miterLimit, 'uint')
+
+	static GdipSetPenMode(pen, penMode) => DllCall('Gdiplus\GdipSetPenMode', 'ptr', pen, 'uint', penMode, 'uint')
+
+	static GdipSetPenStartCap(pen, startCap) => DllCall('Gdiplus\GdipSetPenStartCap', 'ptr', pen, 'uint', startCap, 'uint')
+
+	static GdipSetPenTransform(pen, matrix) => DllCall('Gdiplus\GdipSetPenTransform', 'ptr', pen, 'ptr', matrix, 'uint')
+
+	static GdipSetPenUnit(pen, unit) => DllCall('Gdiplus\GdipSetPenUnit', 'ptr', pen, 'uint', unit, 'uint')
+
+	static GdipSetPenWidth(pen, width) => DllCall('Gdiplus\GdipSetPenWidth', 'ptr', pen, 'int', width, 'uint')
+
+	static GdipSetPixelOffsetMode(graphics, pixelOffsetMode) => DllCall('Gdiplus\GdipSetPixelOffsetMode', 'ptr', graphics, 'ptr', pixelOffsetMode, 'uint')
+
+	static GdipSetPropertyItem(image, item) => DllCall('Gdiplus\GdipSetPropertyItem', 'ptr', image, 'ptr', item, 'uint')
+
+	static GdipSetRenderingOrigin(graphics, x, y) => DllCall('Gdiplus\GdipSetRenderingOrigin', 'ptr', graphics, 'int', x, 'int', y, 'uint')
+
+	static GdipSetSmoothingMode(graphics, smoothingMode) => DllCall('Gdiplus\GdipSetSmoothingMode', 'ptr', graphics, 'uint', smoothingMode, 'uint')
+
+	static GdipSetSolidFillColor(brush, color) => DllCall('Gdiplus\GdipSetSolidFillColor', 'ptr', brush, 'uint', color, 'uint')
+
+	static GdipSetStringFormatAlign(format, align) => DllCall('Gdiplus\GdipSetStringFormatAlign', 'ptr', format, 'uint', align, 'uint')
+
+	static GdipSetStringFormatDigitSubstitution(format, language, substitute) => DllCall('Gdiplus\GdipSetStringFormatDigitSubstitution', 'ptr', format, 'ushort', language, 'uint', substitute, 'uint')
+
+	static GdipSetStringFormatFlags(format, flags) => DllCall('Gdiplus\GdipSetStringFormatFlags', 'ptr', format, 'int', flags, 'uint')
+
+	static GdipSetStringFormatHotkeyPrefix(format, hotkeyPrefix) => DllCall('Gdiplus\GdipSetStringFormatHotkeyPrefix', 'ptr', format, 'int', hotkeyPrefix, 'uint')
+
+	static GdipSetStringFormatLineAlign(format, align) => DllCall('Gdiplus\GdipSetStringFormatLineAlign', 'ptr', format, 'uint', align, 'uint')
+
+	static GdipSetStringFormatMeasurableCharacterRanges(format, rangeCount, ranges) => DllCall('Gdiplus\GdipSetStringFormatMeasurableCharacterRanges', 'ptr', format, 'int', rangeCount, 'ptr', ranges, 'uint')
+
+	static GdipSetStringFormatTabStops(format, firstTabOffset, count, tabStops) => DllCall('Gdiplus\GdipSetStringFormatTabStops', 'ptr', format, 'int', firstTabOffset, 'int', count, 'ptr', tabStops, 'uint')
+
+	static GdipSetStringFormatTrimming(format, trimming) => DllCall('Gdiplus\GdipSetStringFormatTrimming', 'ptr', format, 'uint', trimming, 'uint')
+
+	static GdipSetTextRenderingHint(graphics, mode) => DllCall('Gdiplus\GdipSetTextRenderingHint', 'ptr', graphics, 'uint', mode, 'uint')
+
+	static GdipSetTextureTransform(brush, matrix) => DllCall('Gdiplus\GdipSetTextureTransform', 'ptr', brush, 'ptr', matrix, 'uint')
+
+	static GdipSetTextureWrapMode(brush, wrapmode) => DllCall('Gdiplus\GdipSetTextureWrapMode', 'ptr', brush, 'uint', wrapmode, 'uint')
+
+	static GdipSetWorldTransform(graphics, matrix) => DllCall('Gdiplus\GdipSetWorldTransform', 'ptr', graphics, 'ptr', matrix, 'uint')
+
+	static GdipShearMatrix(matrix, shearX, shearY, order) => DllCall('Gdiplus\GdipShearMatrix', 'ptr', matrix, 'int', shearX, 'int', shearY, 'uint', order, 'uint')
+
+	static GdipStartPathFigure(path) => DllCall('Gdiplus\GdipStartPathFigure', 'ptr', path, 'uint')
+
+	static GdipStringFormatGetGenericDefault(format) => DllCall('Gdiplus\GdipStringFormatGetGenericDefault', 'ptr', format, 'uint')
+
+	static GdipStringFormatGetGenericTypographic(format) => DllCall('Gdiplus\GdipStringFormatGetGenericTypographic', 'ptr', format, 'uint')
+
+	static GdipTestControl(control, param) => DllCall('Gdiplus\GdipTestControl', 'uint', control, 'ptr', param, 'uint')
+
+	static GdipTransformMatrixPoints(matrix, pts, count) => DllCall('Gdiplus\GdipTransformMatrixPoints', 'ptr', matrix, 'ptr', pts, 'int', count, 'uint')
+
+	static GdipTransformMatrixPointsI(matrix, pts, count) => DllCall('Gdiplus\GdipTransformMatrixPointsI', 'ptr', matrix, 'ptr', pts, 'int', count, 'uint')
+
+	static GdipTransformPath(path, matrix) => DllCall('Gdiplus\GdipTransformPath', 'ptr', path, 'ptr', matrix, 'uint')
+
+	static GdipTransformPoints(graphics, destSpace, srcSpace, points, count) => DllCall('Gdiplus\GdipTransformPoints', 'ptr', graphics, 'uint', destSpace, 'uint', srcSpace, 'ptr', points, 'int', count, 'uint')
+
+	static GdipTransformPointsI(graphics, destSpace, srcSpace, points, count) => DllCall('Gdiplus\GdipTransformPointsI', 'ptr', graphics, 'uint', destSpace, 'uint', srcSpace, 'ptr', points, 'int', count, 'uint')
+
+	static GdipTransformRegion(region, matrix) => DllCall('Gdiplus\GdipTransformRegion', 'ptr', region, 'ptr', matrix, 'uint')
+
+	static GdipTranslateClip(graphics, dx, dy) => DllCall('Gdiplus\GdipTranslateClip', 'ptr', graphics, 'int', dx, 'int', dy, 'uint')
+
+	static GdipTranslateClipI(graphics, dx, dy) => DllCall('Gdiplus\GdipTranslateClipI', 'ptr', graphics, 'int', dx, 'int', dy, 'uint')
+
+	static GdipTranslateLineTransform(brush, dx, dy, order) => DllCall('Gdiplus\GdipTranslateLineTransform', 'ptr', brush, 'int', dx, 'int', dy, 'uint', order, 'uint')
+
+	static GdipTranslateMatrix(matrix, offsetX, offsetY, order) => DllCall('Gdiplus\GdipTranslateMatrix', 'ptr', matrix, 'int', offsetX, 'int', offsetY, 'uint', order, 'uint')
+
+	static GdipTranslatePathGradientTransform(brush, dx, dy, order) => DllCall('Gdiplus\GdipTranslatePathGradientTransform', 'ptr', brush, 'int', dx, 'int', dy, 'uint', order, 'uint')
+
+	static GdipTranslatePenTransform(pen, dx, dy, order) => DllCall('Gdiplus\GdipTranslatePenTransform', 'ptr', pen, 'int', dx, 'int', dy, 'uint', order, 'uint')
+
+	static GdipTranslateRegion(region, dx, dy) => DllCall('Gdiplus\GdipTranslateRegion', 'ptr', region, 'int', dx, 'int', dy, 'uint')
+
+	static GdipTranslateRegionI(region, dx, dy) => DllCall('Gdiplus\GdipTranslateRegionI', 'ptr', region, 'int', dx, 'int', dy, 'uint')
+
+	static GdipTranslateTextureTransform(brush, dx, dy, order) => DllCall('Gdiplus\GdipTranslateTextureTransform', 'ptr', brush, 'int', dx, 'int', dy, 'uint', order, 'uint')
+
+	static GdipTranslateWorldTransform(graphics, dx, dy, order) => DllCall('Gdiplus\GdipTranslateWorldTransform', 'ptr', graphics, 'int', dx, 'int', dy, 'uint', order, 'uint')
+
+	static GdipVectorTransformMatrixPoints(matrix, pts, count) => DllCall('Gdiplus\GdipVectorTransformMatrixPoints', 'ptr', matrix, 'ptr', pts, 'int', count, 'uint')
+
+	static GdipVectorTransformMatrixPointsI(matrix, pts, count) => DllCall('Gdiplus\GdipVectorTransformMatrixPointsI', 'ptr', matrix, 'ptr', pts, 'int', count, 'uint')
+
+	static GdipWarpPath(path, matrix, points, count, srcx, srcy, srcwidth, srcheight, warpMode, flatness) => DllCall('Gdiplus\GdipWarpPath', 'ptr', path, 'ptr', matrix, 'ptr', points, 'int', count, 'int', srcx, 'int', srcy, 'int', srcwidth, 'int', srcheight, 'uint', warpMode, 'int', flatness, 'uint')
+
+	static GdipWidenPath(nativePath, pen, matrix, flatness) => DllCall('Gdiplus\GdipWidenPath', 'ptr', nativePath, 'ptr', pen, 'ptr', matrix, 'int', flatness, 'uint')
+
+	static GdipWindingModeOutline(path, matrix, flatness) => DllCall('Gdiplus\GdipWindingModeOutline', 'ptr', path, 'ptr', matrix, 'int', flatness, 'uint')
+
+	static GdiplusNotificationHook(token) => DllCall('Gdiplus\GdiplusNotificationHook', 'uptr', token, 'uint')
+
+	static GdiplusNotificationUnhook(token) => DllCall('Gdiplus\GdiplusNotificationUnhook', 'uptr', token, 'int')
+
+	static GdiplusShutdown(token) => DllCall('Gdiplus\GdiplusShutdown', 'uptr', token, 'int')
+
+	static GdiplusStartup(token, input, output) => DllCall('Gdiplus\GdiplusStartup', 'uptr', token, 'ptr', input, 'ptr', output, 'uint')
+	;#endregion
+
 }
+
+MakeSnippet()
+{
+	static template := Format.Bind("
+	(
+		"{1}":{
+			"prefix": [{2}],
+			"body"  : "WAPI.{1}"
+		},`n
+	)")
+
+	VarSetStrCapacity(&out := "", 512000)
+	
+	for prop in WAPI.OwnProps() 
+		out .= template(prop, RTrim(RegExReplace(prop, "S).*?([A-Z][a-z\d_]*).*?", '"$1", '), ", "))
+	
+	return out
+}
+
+; A_Clipboard := MakeSnippet()
+
+
+; MsgBx out
+
+
