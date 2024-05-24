@@ -337,3 +337,178 @@ class tagMSLLHOOKSTRUCT extends _Struct {
     time       : u32
     dwExtraInfo: uptr
 }
+
+class structOutC
+{
+	static Call(sc)
+	{
+		p := { base: this.Prototype }
+		p.DefineProp('p', { type: 'uptr' })
+		p.DefineProp('__value', { set: set_out_value(this, value) {
+			if value is VarRef
+				this.p := ObjGetDataPtr(%value% := sc())
+			else if value is sc
+				this.p := ObjGetDataPtr(value)
+			else
+				throw TypeError('Expected a VarRef or ' sc.Prototype.__Class ' but got a ' type(value), -1)
+		} })
+		return { Prototype: p }
+	}
+}
+
+StructOut(sc)
+{
+	oc := Class(Object)
+	oc.Prototype
+		.DefineProp('p', { type: 'uptr' })
+		.DefineProp('__value', { set: set_out_value(this, value) {
+			if value is VarRef
+				this.p := ObjGetDataPtr(%value% := sc())
+			else if value is sc
+				this.p := ObjGetDataPtr(value)
+			else
+				throw TypeError('Expected a VarRef or ' sc.Prototype.__Class ' but got a ' type(value), -1)
+		}})
+	return oc
+}
+
+class CString {
+	static Call(n, cp := "UTF-16") {
+		p := {base: this.Prototype, Codepage: cp, Size: n * StrPut("", cp)}
+		p.DefineProp('Ptr', {type: p.Size})
+		return {Prototype: p}
+	}
+	__value {
+		get => StrGet(this,, this?.Codepage?)
+		set => StrPut(value, this,, this?.Codepage?)
+	}
+}
+
+; Define a struct containing a string of at most 32 UTF-8 code units.
+class XStruct 
+{
+	str: CString(2048)
+}
+
+
+class DTTOPTS extends _Struct {
+    dwSize             : i32 := ObjGetDataSize(this)
+    dwFlags            : i32
+    crText             : u32
+    crBorder           : u32
+    crShadow           : u32
+    iTextShadowType    : i32
+    ptShadowOffset     : Point
+    iBorderSize        : i32
+    iFontPropId        : i32
+    iColorPropId       : i32
+    iStateId           : i32
+    fApplyOverlay      : i32
+    iGlowSize          : i32
+    pfnDrawTextCallback: iptr
+    lParam             : iptr
+}
+
+; class UAHMENUITEMMETRICS {
+;     rgsizeBar: Array[2] of Point
+;     rgsizePopup: Array[4] of Point
+; }
+
+; class UAHMENUPOPUPMETRICS {
+;     rgcx: Array[4] of i32
+;     fUpdateMaxWidths: i32
+; }
+
+
+; class UAHDRAWMENUITEM {
+;     dis: DRAWITEMSTRUCT
+;     um: UAHMENU
+;     umi: UAHMENUITEM
+; }
+
+; class UAHMEASUREMENUITEM {
+;     mis: MEASUREITEMSTRUCT
+;     um: UAHMENU
+;     umi: UAHMENUITEM
+; }
+
+; Define the UAHMENUITEMMETRICS struct as a class
+class UAHMENUITEMMETRICS {
+    rgsizeBar1_cx  : u32
+    rgsizeBar1_cy  : u32
+    rgsizeBar2_cx  : u32
+    rgsizeBar2_cy  : u32
+    rgsizePopup1_cx: u32
+    rgsizePopup1_cy: u32
+    rgsizePopup2_cx: u32
+    rgsizePopup2_cy: u32
+    rgsizePopup3_cx: u32
+    rgsizePopup3_cy: u32
+    rgsizePopup4_cx: u32
+    rgsizePopup4_cy: u32
+
+    rgsizeBar[i]   => {cx: this.rgsizeBar%i%_cx, cy: this.rgsizeBar%i%_cy}
+    rgsizePopup[i] => {cx: this.rgsizePopup%i%_cx, cy: this.rgsizePopup%i%_cy}
+}
+
+; Define the UAHMENUPOPUPMETRICS struct as a class
+class UAHMENUPOPUPMETRICS {
+    rgcx1 : u32
+    rgcx2 : u32
+    rgcx3 : u32
+    rgcx4 : u32
+    fUpdateMaxWidths : u32  ; Use a full dword for the bit field
+}
+
+; Define the UAHMENU struct as a class
+class UAHMENU {
+    hmenu  : uptr  ; Use uptr for handles
+    hdc    : uptr    ; Use uptr for handles
+    dwFlags: u32
+}
+
+; Define the UAHMENUITEM struct as a class
+class UAHMENUITEM {
+    iPosition: i32
+    umim     : UAHMENUITEMMETRICS
+    umpm     : UAHMENUPOPUPMETRICS
+}
+
+; Define the UAHDRAWMENUITEM struct as a class
+class UAHDRAWMENUITEM {
+    dis_itemID       : u32  ; Assuming itemID is a u32
+    dis_state        : u32   ; Assuming state is a u32
+    dis_hwndItem     : uptr  ; Assuming hwndItem is a handle
+    dis_hDC          : uptr       ; Assuming hDC is a handle
+    dis_rcItem_left  : i32  ; Assuming rcItem is a RECT struct
+    dis_rcItem_top   : i32
+    dis_rcItem_right : i32
+    dis_rcItem_bottom: i32
+    dis_CtlType      : u32      ; Assuming CtlType is a u32
+    dis_CtlID        : u32        ; Assuming CtlID is a u32
+    dis_itemData     : uptr    ; Assuming itemData is a pointer
+    um               : UAHMENU
+    umi              : UAHMENUITEM
+}
+
+; Define the UAHMEASUREMENUITEM struct as a class
+class UAHMEASUREMENUITEM {
+    mis_CtlType   : u32  ; Assuming CtlType is a u32
+    mis_CtlID     : u32    ; Assuming CtlID is a u32
+    mis_itemID    : u32   ; Assuming itemID is a u32
+    mis_itemWidth : u32  ; Assuming itemWidth is a u32
+    mis_itemHeight: u32 ; Assuming itemHeight is a u32
+    mis_itemData  : uptr  ; Assuming itemData is a pointer
+    um            : UAHMENU
+    umi           : UAHMENUITEM
+}
+
+class MENUBARINFO {
+    cbSize      : u32 := ObjGetDataSize(this)
+    rcBar       : RECT
+    hMenu       : uptr
+    hwndMenu    : uptr
+    fBarFocused : BOOL
+    fFocused    : BOOL
+    fUnused     : u32
+}
