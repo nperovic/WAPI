@@ -71,33 +71,7 @@ class _Struct
 			}}
 		}
 	}
- 
-    ToString()
-	{
-		out := ""
-		o   := PrintStruct(%this.Base.__Class%, 0)
 
-		loop parse o, "`n" {
-			if !RegExMatch(A_LoopField, "iS)^\d+\h+(?<type>\w+)\h+(?<n>.+)", &m)
-				continue
-
-			if InStr(m["n"], ".") {
-				_this := this
-				for p in StrSplit(m["n"])
-					_this := _this.%p%
-			}
-			out .= m["n"] ":`t" (_this ?? this.%m["n"]%) "`n"
-		}
-
-        return Trim(out, "`n")
-    }
-
-	; GetPropOffset(prop)
-	; {
-	; 	propDesc := this.Base.Prototype.GetOwnPropDesc(prop)
-	; 	if (propDesc.HasProp("Offset"))
-	; 		return propDesc.Offset
-	; }
 
 	Ptr  => ObjGetDataPtr(this)
 	Size => ObjGetDataSize(this)
