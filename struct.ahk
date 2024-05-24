@@ -6,7 +6,7 @@
  * @date 2024.05.06
  * @version 1.0.0
  ;***********************************************************************/
-#Requires AutoHotkey v2.1-alpha.9
+#Requires AutoHotkey v2.1-alpha.11
 #Include <WinAPI>
 
 class typedef
@@ -56,31 +56,126 @@ class _Struct
 
 	__value {
 		set {
-			if IsObject(value)
+			switch Type(value) {
+			case "VarRef": %value% := this
+			case "Object": 
 			{
 				for p, v in value.OwnProps()
 					if this.Base.HasProp(p)
 						this.%p% := v
 			}
-			else if value is this.Base
-				this := ObjGetDataPtr(value)
-			else
+			default: 
+			{
+				try return ObjSetDataPtr(this, ObjGetDataPtr(value))
 				throw TypeError('Expected a VarRef or ' this.Base.__Class ' but got a ' type(value), -1)
+			}}
 		}
 	}
-
-	ToString(){
+ 
+    ToString()
+	{
 		out := ""
-        for prop, value in this.Base.OwnProps()
-            if !InStr(prop, "__")
-                out .= prop ":`t" this.%prop% "`n"
-		return Trim(out, "`n")
-	}
+		o   := PrintStruct(%this.Base.__Class%, 0)
 
-	Ptr => ObjGetDataPtr(this)
+		loop parse o, "`n" {
+			if !RegExMatch(A_LoopField, "iS)^\d+\h+(?<type>\w+)\h+(?<n>.+)", &m)
+				continue
+
+			if InStr(m["n"], ".") {
+				_this := this
+				for p in StrSplit(m["n"])
+					_this := _this.%p%
+			}
+			out .= m["n"] ":`t" (_this ?? this.%m["n"]%) "`n"
+		}
+
+        return Trim(out, "`n")
+    }
+
+	; GetPropOffset(prop)
+	; {
+	; 	propDesc := this.Base.Prototype.GetOwnPropDesc(prop)
+	; 	if (propDesc.HasProp("Offset"))
+	; 		return propDesc.Offset
+	; }
+
+	Ptr  => ObjGetDataPtr(this)
 	Size => ObjGetDataSize(this)
 }
 
+; class tagDRAWITEMSTRUCT {
+; 	UINT      CtlType;
+; 	UINT      CtlID;
+; 	UINT      itemID;
+; 	UINT      itemAction;
+; 	UINT      itemState;
+; 	HWND      hwndItem;
+; 	HDC       hDC;
+; 	RECT      rcItem;
+; 	ULONG_PTR itemData;
+; }
+
+class BaseStruct {
+    ptr  => ObjGetDataPtr(this)
+    size => ObjGetDataSize(this)
+}
+ 
+class HDITEMW extends BaseStruct {  
+    mask      : u32
+    cxy       : i32
+    pszText   : this.LPWSTR
+    hbm       : uptr
+    cchTextMax: i32 := 260
+    fmt       : i32
+    lParam    : iptr
+    iImage    : i32
+    iOrder    : i32
+    type      : u32
+    pvFilter  : uptr
+    state     : u32
+
+    class CSTR extends BaseStruct {
+        value: CString(260)
+    }
+
+    class LPWSTR extends BaseStruct {
+        ptr: uptr
+
+        __New(text?) {
+            this.str := HDITEMW.CSTR()
+            this.ptr := this.str.ptr
+			if (text??0)
+				this.str.value := text
+        }
+
+        __value {
+            get => this.str.value
+            set => this.str.value := value
+        }
+    }
+}
+ 
+class NMLVCUSTOMDRAW extends BaseStruct {
+    nmcd       : NMCUSTOMDRAW
+    clrText    : u32
+    clrTextBk  : u32
+    iSubItem   : i32
+    dwItemType : u32
+    clrFace    : u32
+    iIconEffect: i32
+    iIconPhase : i32
+    iPartId    : i32
+    iStateId   : i32
+    rcText     : RECT
+    uAlign     : u32
+}
+
+class HD_HITTESTINFO extends BaseStruct {
+    pt   : POINT
+    flags: u32
+    iItem: i32
+}
+ 
 class lldiv_t {
     quot: i64
     rem : i64
@@ -200,10 +295,10 @@ class RECT extends _Struct
 	Bottom: i32
 
 	; To get "xN yN wN hN"
-	GetXYWHStr(p*) => ("x" this.Left " y" this.Top " w" (this.Right-this.left) " h" (this.Bottom-this.Top))
+	GetXYWHStr() => ("x" this.Left " y" this.Top " w" (this.Right-this.left) " h" (this.Bottom-this.Top))
 	
 	; To get an array that can be used in `WinMove`, `ControlMove`, etc.
-	GetXYWHArr(p*) => [this.Left, this.Top, this.Right-this.left, this.Bottom-this.Top].Push()
+	GetXYWHArr() => [this.Left, this.Top, this.Right-this.left, this.Bottom-this.Top]
 }
 
 class WINDOWINFO extends _Struct
@@ -288,37 +383,22 @@ StructOut(sc)
 	return oc
 }
 
-; Define a reusable "meta-class" or "generic class" for C-style strings.
-; Calling CString itself returns a new class for use in a type expression.
-class CString
-{
-	static Call(n, cp := "UTF-16")
-	{
-		p := { base: this.Prototype }
-		
-		; Size in bytes of a single "character".
-		p.UnitSize := StrPut("", cp)
-		p.Codepage := cp
-		
-		; Total size of any field of this type.
-		p.Size := n * p.UnitSize
-		
-		; See Untyped Binary Data.
-		p.DefineProp('Ptr', { type: p.Size })
-		return { Prototype: p }
+class CString {
+	static Call(n, cp := "UTF-16") {
+		p := {base: this.Prototype, Codepage: cp, Size: n * StrPut("", cp)}
+		p.DefineProp('Ptr', {type: p.Size})
+		return {Prototype: p}
 	}
-
-	__value
-	{
-		get => StrGet(this, , this.Codepage)
-		set => StrPut(value, this, , this.Codepage)
+	__value {
+		get => StrGet(this,, this?.Codepage?)
+		set => StrPut(value, this,, this?.Codepage?)
 	}
 }
 
 ; Define a struct containing a string of at most 32 UTF-8 code units.
-class XStruct extends _Struct
+class XStruct 
 {
-	str: CString(32, "UTF-8")
+	str: CString(2048)
 }
 
 
